@@ -7,7 +7,10 @@
 	<property name="lib.dir"     value="lib"/>
 	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+
 	</path>
+
+	<path id="application" location="${jar.dir}/${ant.project.name}.jar"/>
 	<property name="lib.dir"     value="lib"/>
 	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar"/>
@@ -18,6 +21,9 @@
 	<target name="compile">
 		<mkdir dir="${classes.dir}"/>
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+		<copy todir="${classes.dir}">
+			<fileset dir="${src.dir}" excludes="**/*.java"/>
+		</copy> 
 	</target>
 	<target name="jar" depends="compile">
 		<mkdir dir="${jar.dir}"/>
@@ -32,8 +38,21 @@
 			<classpath>
 				<path refid="classpath"/>
 				<path location="${jar.dir}/${ant.project.name}.jar"/>
+				<path refid="application"/>
 			</classpath>
 		</java>
+	</target>
+	<target name="junit" depends="jar">
+		<junit printsummary="yes">
+			<classpath>
+				<path refid="classpath"/>
+				<path refid="application"/>
+			</classpath>
+
+			<batchtest fork="yes">
+				<fileset dir="${src.dir}" includes="**/*Test.java"/>
+			</batchtest>
+		</junit>
 	</target>
 	<target name="clean-build" depends="clean,jar"/>
 	<target name="main" depends="clean,run"/>
