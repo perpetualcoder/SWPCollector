@@ -5,6 +5,6 @@ public class NodeTest extends junit.framework.TestCase {
 	}
 
 	public void testWillAlwaysFail() {
-		fail("An error message");
+		assertEquals(" to Return must return hello","Hello!",new Node().toReturn());
 	}
 }
