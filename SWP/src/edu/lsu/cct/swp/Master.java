@@ -12,5 +12,11 @@ public class Master {
 	public Node getNode(int nodeId){
 		return nodeMap.get(nodeId);
 	}
+	
+	public Node createNode(){
+		Node n = new Node();
+		nodeMap.put(n.getNodeId(), n);
+		return n;
+	}
 
 }
