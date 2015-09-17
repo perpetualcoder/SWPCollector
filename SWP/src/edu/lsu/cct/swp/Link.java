@@ -19,5 +19,12 @@ public class Link {
 		which = w;
 	}
 	
+	public void delete() {
+		Message msg = new Message(MessageType.Delete, src, dest);
+		msg.setWhich(which);
+		msg.send();
+		
+	}
+	
 
 }

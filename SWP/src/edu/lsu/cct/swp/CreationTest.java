@@ -54,9 +54,6 @@ public class CreationTest extends junit.framework.TestCase {
 		}
 		createWeakLinks();
 		for (int i = 0; i < 5; i++) {
-			System.out.println("node " + i + " outgoing "
-					+ node[i].numOutgoingLinks());
-			assertEquals("Strong RC is not same", i, node[i].getSRC());
 			assertEquals("Weak RC is not as same as expected", 4 - i,
 					node[i].getWRC());
 		}

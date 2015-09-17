@@ -5,13 +5,13 @@ public class Message {
 	private int src;
 	private int dest;
 	private int which;
-
-	static Master master;
+	private boolean phantom;
 
 	Message(MessageType type, int src, int dest) {
 		this.type = type;
 		this.src = src;
 		this.dest = dest;
+		this.phantom = false;
 	}
 
 	public boolean send() {
@@ -27,6 +27,14 @@ public class Message {
 	
 	public int getWhich() {
 		return which;
+	}
+	
+	public void setPhantom() {
+		phantom =  true;
+	}
+	
+	public boolean getPhantom() {
+		return phantom;
 	}
 	
 	public MessageType getType(){

@@ -15,6 +15,7 @@ public class Node {
 	private int which;
 	private HashMap<Integer, Link> outgoingLinks;
 	private Queue qu;
+	private boolean deleted;
 
 	static int phantom = 2;
 	static AtomicInteger gCounter = new AtomicInteger();
@@ -27,12 +28,22 @@ public class Node {
 		rc = new int[3];
 		rc[0] = rc[1] = rc[2] = 0;
 		which = 0;
+		deleted = false;
 	}
 
 	public boolean createLink(int dest) {
 		Link lnk = new Link(nodeId, dest, 0);
 		outgoingLinks.put(dest, lnk);
 		return true;
+	}
+	
+	public boolean deleteLink(int dest) {
+		Link destn = outgoingLinks.get(dest);
+		if (destn != null) {
+			destn.delete();
+			outgoingLinks.remove(dest);
+		}
+		return true;		
 	}
 
 	public String toReturn() {
@@ -61,9 +72,28 @@ public class Node {
 			case CreateLinkReturn:
 				createLinkReturnMessage(m);
 				break;
+			case Delete:
+				deleteMessage(m);
+				break;
 			}
 		}
 	}
+
+	private void deleteMessage(Message m) {
+		int src = m.getSrc();
+		if (which == m.getWhich()) {
+			rc[which]--;
+		}
+		else {
+			rc[1-which]--;
+		}
+		if (rc[which] ==  0 && rc[1-which] == 0 && rc[2] ==0) {
+			deleted = true;
+			for (Link l : outgoingLinks.values())  {
+				deleteLink(l.)
+			}
+		}
+		}
 
 	private void createLinkReturnMessage(Message m) {
 		int src = m.getSrc();
@@ -76,8 +106,6 @@ public class Node {
 	}
 
 	private void createLinkMessage(Message msg) {
-		System.out.println("rc phantom" + rc[phantom] +" size"+ 
-				outgoingLinks.size());
 		if (rc[phantom] == 0 && outgoingLinks.size() == 0) {
 			rc[which]++;
 			Message m = new Message(MessageType.CreateLinkReturn, this.nodeId,
@@ -85,7 +113,6 @@ public class Node {
 			m.setWhich(which);
 			m.send();
 		} else if (rc[phantom] == 0 && outgoingLinks.size() > 0) {
-			System.out.println("Hello incremented weak link");
 			rc[1 - which]++;
 			Message m = new Message(MessageType.CreateLinkReturn, this.nodeId,
 					msg.getSrc());
