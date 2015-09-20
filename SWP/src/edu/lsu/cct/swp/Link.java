@@ -15,15 +15,39 @@ public class Link {
 		msg.send();
 	}
 	
+	public int getDest() {
+		return dest;
+	}
+	
 	public void setWhich(int w) {
 		which = w;
 	}
 	
-	public void delete() {
+	public void setPhantom() {
+		phantom = true;
+	}
+	
+	public void delete(int collapseId) {
 		Message msg = new Message(MessageType.Delete, src, dest);
 		msg.setWhich(which);
+		msg.setPhantom();
+		msg.setCollapseId(collapseId);
 		msg.send();
-		
+	}
+	
+	public void phantomize(int collapseId) {
+		Message msg = new Message(MessageType.Phantomize, src, dest);
+		msg.setWhich(which);
+		msg.setPhantom();
+		setPhantom();
+		msg.setCollapseId(collapseId);
+		msg.send();
+	}
+	
+	public void tryRecover(int collapseId) {
+		Message msg = new Message(MessageType.TryRecovery, src, dest);
+		msg.setCollapseId(collapseId);
+		msg.send();
 	}
 	
 

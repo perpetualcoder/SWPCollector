@@ -58,4 +58,6 @@ public class CreationTest extends junit.framework.TestCase {
 					node[i].getWRC());
 		}
 	}
+	
+	
 }

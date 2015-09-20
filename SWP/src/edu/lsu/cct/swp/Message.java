@@ -1,11 +1,16 @@
 package edu.lsu.cct.swp;
 
+import junit.framework.TestCase;
+
 public class Message {
 	private MessageType type;
 	private int src;
 	private int dest;
 	private int which;
 	private boolean phantom;
+	private int collapseId;
+	
+	static public Master master;
 
 	Message(MessageType type, int src, int dest) {
 		this.type = type;
@@ -15,6 +20,7 @@ public class Message {
 	}
 
 	public boolean send() {
+		assert(master != null);
 		Node dst = master.getNode(this.dest);
 		assert (dst != null);
 		dst.getQu().add(this);
@@ -23,6 +29,14 @@ public class Message {
 	
 	public void setWhich(int w) {
 		which = w;
+	}
+	
+	public void setCollapseId(int id) {
+		collapseId = id;
+	}
+	
+	public int getCollapseId() {
+		return collapseId;
 	}
 	
 	public int getWhich() {
