@@ -78,6 +78,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 			assertTrue("The nodes are healthy",
 					node[i].getState() == NodeState.Healthy);
 		}
+		// Verifying if the weak counts are as expected.
 		assertTrue("The node 0 weak count is not right", node[0].getWRC() == 1);
 		assertTrue(" The node 1 weak count is not right", node[2].getWRC() == 1);
 		// Severe the root link.
