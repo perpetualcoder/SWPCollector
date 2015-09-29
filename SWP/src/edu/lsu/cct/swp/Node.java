@@ -41,6 +41,10 @@ public class Node {
 		nodeParent = id;
 	}
 
+	public int getPhantomCount() {
+		return rc[2];
+	}
+
 	public int getParentNodeId() {
 		return nodeParent;
 	}
@@ -65,11 +69,11 @@ public class Node {
 
 					} else {
 						// Move to TryRecover State.
-						state = NodeState.TryRecover;
+						state = NodeState.Recover;
 						if (outgoingLinks.size() > 0) {
 							for (Link l : outgoingLinks.values()) {
 								incWaitMsg();
-								l.tryRecover(collapseId);
+								l.recover(collapseId);
 							}
 						} else {
 							incWaitMsg();
@@ -81,20 +85,47 @@ public class Node {
 					sendReturnMessage();
 				}
 				break;
-			case TryRecover:
+			case Recover:
 				if (collapseId == nodeId) {
 					if (getSRC() > 0) {
-						
-					}
-					else  {
+						state = NodeState.Built;
+						if (outgoingLinks.size() > 0) {
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								l.build(collapseId);
+							}
+						} else {
+							incWaitMsg();
+							decWaitMsg();
+						}
+					} else {
 						if (outgoingLinks.size() > 0) {
 							for (Link l : outgoingLinks.values()) {
 								l.delete(collapseId);
 							}
-						}						
+						}
+					}
+				} else {
+					if (getSRC() == 0) {
+						sendReturnMessage();
+					} else {
+						state = NodeState.Built;
+						if (outgoingLinks.size() > 0) {
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								l.build(collapseId);
+							}
+						} else {
+							incWaitMsg();
+							decWaitMsg();
+						}
 					}
 				}
-				else {
+				break;
+			case Built:
+				if (collapseId == nodeId) {
+					// Clean up Saved collapse id and stuff.
+				} else {
 					sendReturnMessage();
 				}
 				break;
@@ -103,7 +134,7 @@ public class Node {
 	}
 
 	public boolean createLink(int dest) {
-		Link lnk = new Link(nodeId, dest, 0);
+		Link lnk = new Link(nodeId, dest, which);
 		outgoingLinks.put(dest, lnk);
 		return true;
 	}
@@ -152,29 +183,80 @@ public class Node {
 			case Return:
 				returnMessage(m);
 				break;
-			case TryRecovery:
-				tryRecoverMessage(m);
+			case Recover:
+				recoverMessage(m);
+				break;
+			case Build:
+				buildMessage(m);
 				break;
 			}
 		}
 	}
 
-	private void tryRecoverMessage(Message m) {
-		if (collapseId == m.getCollapseId() && state == NodeState.TryRecover) {
-			// Return the message when the node is already visited by the 
+	private void buildMessage(Message m) {
+		if (collapseId == m.getCollapseId()) {
+			rc[2]--;
+			if (getSRC() > 0) {
+				rc[1 - which]++;
+			} else {
+				rc[which]++;
+			}
+			if (state == NodeState.Built) {
+				Message msg = new Message(MessageType.Return, nodeId,
+						m.getSrc());
+				msg.send();
+			} else if (state == NodeState.Recover
+					|| state == NodeState.Phantomized) {
+				if (m.getSrc() == nodeParent) {
+					state = NodeState.Built;
+					if (outgoingLinks.size() > 0) {
+						for (Link l : outgoingLinks.values()) {
+							incWaitMsg();
+							l.build(collapseId);
+						}
+					} else {
+						incWaitMsg();
+						decWaitMsg();
+					}
+				} else {
+					Message msg = new Message(MessageType.Return, nodeId,
+							m.getSrc());
+					msg.send();
+				}
+			}
+		}
+
+	}
+
+	private void recoverMessage(Message m) {
+		if (collapseId == m.getCollapseId() && state == NodeState.Recover) {
+			// Return the message when the node is already visited by the
 			// TryRecover traversal.
 			Message msg = new Message(MessageType.Return, nodeId, m.getSrc());
 			msg.send();
 			return;
 		}
 		if (rc[which] == 0 && rc[1 - which] == 0 && rc[2] != 0
-				&& collapseId == m.getCollapseId()) {
-			// Spread the TryRecover Traversal.
-			state = NodeState.TryRecover;
+				&& collapseId == m.getCollapseId()
+				&& state == NodeState.Phantomized) {
+			// Spread the Recover Traversal.
+			state = NodeState.Recover;
 			if (outgoingLinks.size() > 0) {
 				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
-					l.tryRecover(collapseId);
+					l.recover(collapseId);
+				}
+			} else {
+				incWaitMsg();
+				decWaitMsg();
+			}
+		} else if (getSRC() > 0 && rc[2] != 0 && collapseId == m.getCollapseId()
+				&& state == NodeState.Phantomized) {
+			state = NodeState.Built;
+			if (outgoingLinks.size() > 0) {
+				for (Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId);
 				}
 			} else {
 				incWaitMsg();
@@ -203,8 +285,7 @@ public class Node {
 		}
 		if (collapseId == m.getCollapseId()) {
 			// Node was already part of the phantomization.
-			Message msg = new Message(MessageType.Return, nodeId,
-					m.getSrc());
+			Message msg = new Message(MessageType.Return, nodeId, m.getSrc());
 			msg.send();
 		} else if (collapseId != m.getCollapseId() && collapseId != -1) {
 			// Some other collapse is there and interferring with this collapse.
@@ -228,7 +309,7 @@ public class Node {
 				collapseId = m.getCollapseId();
 				state = NodeState.Phantomized;
 				setNodeParent(m.getSrc());
-				which = 1- which;
+				which = 1 - which;
 				if (outgoingLinks.size() > 0) {
 					for (Link l : outgoingLinks.values()) {
 						incWaitMsg();
@@ -250,9 +331,9 @@ public class Node {
 	}
 
 	private void deleteMessage(Message m) {
-		// Delete Message from the collapse traversal. So simply delete rather 
+		// Delete Message from the collapse traversal. So simply delete rather
 		// than creating new phantomization.
-		if (m.getCollapseId() == collapseId && collapseId != -1 
+		if (m.getCollapseId() == collapseId && collapseId != -1
 				&& state != NodeState.Dead) {
 			rc[2]--;
 			if (rc[which] == 0 && rc[1 - which] == 0 && rc[2] == 0) {
@@ -261,8 +342,7 @@ public class Node {
 				for (Link l : outgoingLinks.values()) {
 					l.delete(collapseId);
 				}
-			}
-			else if (rc[which] == 0 && rc[1 - which] == 0 && rc[2] != 0) {
+			} else if (rc[which] == 0 && rc[1 - which] == 0 && rc[2] != 0) {
 				// Everything is zero but phantom. So starts deleting.
 				for (Link l : outgoingLinks.values()) {
 					l.delete(collapseId);
@@ -285,7 +365,7 @@ public class Node {
 			// Phantomization starts here.
 			collapseId = nodeId;
 			state = NodeState.Phantomized;
-			which = 1- which;
+			which = 1 - which;
 			if (outgoingLinks.size() > 0) {
 				for (Link l : outgoingLinks.values()) {
 					l.phantomize(collapseId);
@@ -308,13 +388,17 @@ public class Node {
 		return qu;
 	}
 
+	public int getWhich() {
+		return which;
+	}
+
 	private void createLinkMessage(Message msg) {
 		if (rc[phantom] == 0 && outgoingLinks.size() == 0) {
 			rc[which]++;
 			state = NodeState.Healthy;
 			Message m = new Message(MessageType.CreateLinkReturn, this.nodeId,
 					msg.getSrc());
-			m.setWhich(which);
+			m.setWhich();
 			m.send();
 		} else if (rc[phantom] == 0 && outgoingLinks.size() > 0) {
 			rc[1 - which]++;
@@ -325,13 +409,12 @@ public class Node {
 		} else {
 			assert(false);
 		}
-
 	}
 
 	public int numOutgoingLinks() {
 		return outgoingLinks.size();
 	}
-	
+
 	public NodeState getState() {
 		return state;
 	}

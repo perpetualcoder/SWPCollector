@@ -1,6 +1,6 @@
 package edu.lsu.cct.swp;
 
 public enum NodeState {
-	Healthy, Phantomized, TryRecover, Dead
+	Healthy, Phantomized, Recover, Built, Dead
 
 }

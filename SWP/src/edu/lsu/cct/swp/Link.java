@@ -3,14 +3,14 @@ package edu.lsu.cct.swp;
 public class Link {
 	private int src;
 	private int dest;
-	private int which;
 	private boolean phantom;
+	private int which;
 	
 	Link(int source, int dst, int which){
 		src = source;
 		dest = dst;
-		this.which = 0;
 		phantom = false;
+		this.which = which;
 		Message msg = new Message(MessageType.CreateLink,src, dst);
 		msg.send();
 	}
@@ -19,8 +19,12 @@ public class Link {
 		return dest;
 	}
 	
-	public void setWhich(int w) {
-		which = w;
+	public void setWhich(int which) {
+		this.which = which;
+	}
+	
+	public int getWhich() {
+		return which;
 	}
 	
 	public void setPhantom() {
@@ -44,9 +48,16 @@ public class Link {
 		msg.send();
 	}
 	
-	public void tryRecover(int collapseId) {
-		Message msg = new Message(MessageType.TryRecovery, src, dest);
+	public void recover(int collapseId) {
+		Message msg = new Message(MessageType.Recover, src, dest);
 		msg.setCollapseId(collapseId);
+		msg.send();
+	}
+
+	public void build(int collapseId) {
+		Message msg = new Message(MessageType.Build, src, dest);
+		msg.setCollapseId(collapseId);
+		msg.setWhich();
 		msg.send();
 	}
 	

@@ -27,8 +27,12 @@ public class Message {
 		return true;
 	}
 	
-	public void setWhich(int w) {
-		which = w;
+	public void setWhich() {
+		which = master.getNode(src).getWhich();
+	}
+	
+	public void setWhich(int which) {
+		this.which = which;
 	}
 	
 	public void setCollapseId(int id) {
