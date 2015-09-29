@@ -74,9 +74,6 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 		// Verifying if the nodes are all healthy and
 		// count as expected.
 		for (int i = 0; i < 5; i++) {
-//			System.out.println("I " + i + "," + node[i].getSRC() + ","
-//					+ node[i].getWRC() + "," + node[i].getPhantomCount() + ","
-//					+ node[i].getState());
 			assertTrue("The Nodes are not strong", node[i].getSRC() > 0);
 			assertTrue("The nodes are healthy",
 					node[i].getState() == NodeState.Healthy);
@@ -102,11 +99,8 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 		// Verify if all the nodes are healthy by now because we have a root
 		// node connected to one of the nodes.
 		for (int i = 0; i < 5; i++) {
-			System.out.println("I " + i + "," + node[i].getSRC() + ","
-					+ node[i].getWRC() + "," + node[i].getPhantomCount() + ","
-					+ node[i].getState());
-//			assertTrue("Node is not dead",
-//					node[i].getState() == NodeState.Built);
+			assertTrue("Node is not dead",
+					node[i].getState() == NodeState.Healthy);
 		}
 
 	}
