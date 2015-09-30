@@ -441,6 +441,11 @@ public class Node {
 	public NodeState getState() {
 		return state;
 	}
+	
+	public void printNode() {
+		System.out.println("Node "+nodeId+" : "+getSRC()+","+
+				getWRC()+" ,"+rc[2]+", "+state);
+	}
 
 	public static void main(String args[]) {
 		BasicConfigurator.configure();
