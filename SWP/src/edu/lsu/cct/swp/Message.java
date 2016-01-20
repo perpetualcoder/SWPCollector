@@ -8,7 +8,9 @@ public class Message {
 	private int dest;
 	private int which;
 	private boolean phantom;
-	private int collapseId;
+	private CollapseId collapseId;
+	private boolean startOver;
+	private CollapseId Override;
 	
 	static public Master master;
 
@@ -35,11 +37,11 @@ public class Message {
 		this.which = which;
 	}
 	
-	public void setCollapseId(int id) {
+	public void setCollapseId(CollapseId id) {
 		collapseId = id;
 	}
 	
-	public int getCollapseId() {
+	public CollapseId getCollapseId() {
 		return collapseId;
 	}
 	
@@ -61,5 +63,21 @@ public class Message {
 	
 	public int getSrc(){
 		return src;
+	}
+
+	public boolean isStartOver() {
+		return startOver;
+	}
+
+	public void setStartOver(boolean startOver) {
+		this.startOver = startOver;
+	}
+
+	public CollapseId getOverride() {
+		return Override;
+	}
+
+	public void setOverride(CollapseId override) {
+		Override = override;
 	}
 }

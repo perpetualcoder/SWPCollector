@@ -29,12 +29,15 @@ public class Master {
 			List<Node> nodes = new ArrayList<>();
 			for (Node n : nodeMap.values()) {
 				if (n.getQu().size() > 0) {
+					System.out.println("Node id"+n.getNodeId());
 					nodes.add(n);
 				}
 			}
 			if (nodes.size() == 0) {
 				break;
 			}
+			System.out.println("There are "+nodes.size()+" nodes have"
+					+ "messages");
 			while (nodes.size() > 0) {
 				int n = RAND.nextInt(nodes.size());
 				Node node = nodes.get(n);

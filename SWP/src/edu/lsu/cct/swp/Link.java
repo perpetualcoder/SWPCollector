@@ -31,30 +31,38 @@ public class Link {
 		phantom = true;
 	}
 	
-	public void delete(int collapseId) {
+	public void delete(CollapseId collapseId) {
 		Message msg = new Message(MessageType.Delete, src, dest);
+		msg.setWhich(which);
+		msg.setCollapseId(collapseId);
+		msg.send();
+	}
+	
+	public void plagueDelete(CollapseId collapseId) {
+		Message msg = new Message(MessageType.PlagueDelete, src, dest);
 		msg.setWhich(which);
 		msg.setPhantom();
 		msg.setCollapseId(collapseId);
 		msg.send();
 	}
 	
-	public void phantomize(int collapseId) {
+	public void phantomize(CollapseId collapseId, CollapseId Override) {
 		Message msg = new Message(MessageType.Phantomize, src, dest);
 		msg.setWhich(which);
 		msg.setPhantom();
 		setPhantom();
 		msg.setCollapseId(collapseId);
+		msg.setOverride(Override);
 		msg.send();
 	}
 	
-	public void recover(int collapseId) {
+	public void recover(CollapseId collapseId) {
 		Message msg = new Message(MessageType.Recover, src, dest);
 		msg.setCollapseId(collapseId);
 		msg.send();
 	}
 
-	public void build(int collapseId) {
+	public void build(CollapseId collapseId) {
 		Message msg = new Message(MessageType.Build, src, dest);
 		msg.setCollapseId(collapseId);
 		msg.setWhich();

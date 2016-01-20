@@ -40,6 +40,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 			assertTrue("Node is not dead",
 					node[i].getState() == NodeState.Dead);
 		}
+		System.out.println("Hello!!!");
 
 	}
 
