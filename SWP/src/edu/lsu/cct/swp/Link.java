@@ -34,6 +34,7 @@ public class Link {
 	public void delete(CollapseId collapseId) {
 		Message msg = new Message(MessageType.Delete, src, dest);
 		msg.setWhich(which);
+		if (phantom) msg.setPhantom();
 		msg.setCollapseId(collapseId);
 		msg.send();
 	}

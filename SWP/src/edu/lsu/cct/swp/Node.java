@@ -62,8 +62,8 @@ public class Node {
 	}
 
 	public boolean isPhantomized() {
-		return (pc > 0) && (rcc == 0) && (phantomized == true) && 
-				(collapseId != null) && (waitMsg == 0);
+		return (pc > 0) && (rcc == 0) && (phantomized == true)
+				&& (collapseId != null) && (waitMsg == 0);
 	}
 
 	public boolean isRecovering() {
@@ -74,6 +74,10 @@ public class Node {
 	public boolean isRecovered() {
 		return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
 				&& waitMsg == 0;
+	}
+
+	public boolean isOrginatorBuilt() {
+		return isOriginator() && rcc > 0 && rc[which] > 0 && collapseId != null;
 	}
 
 	public boolean isMayBeDelete() {
@@ -123,42 +127,10 @@ public class Node {
 		waitMsg--;
 		if (waitMsg == 0) {
 			printNode();
-			System.out.println("is phantomized"+isPhantomized());
+			System.out.println("is phantomized" + isPhantomized());
 			if (isPhantomized()) {
 				if (isOriginator()) {
-					if (startover) {
-						startover = false;
-						collapseId.newCollapse();
-						for (Link l : outgoingLinks.values()) {
-							incWaitMsg();
-							l.phantomize(collapseId, null);
-						}
-						phantomized = true;
-						if (outgoingLinks.isEmpty()) {
-							incWaitMsg();
-							sendReturnMessage(false);
-						}
-					} else if (isPhantomLive()) {
-						for (Link l : outgoingLinks.values()) {
-							incWaitMsg();
-							l.build(collapseId);
-						}
-						if (outgoingLinks.isEmpty()) {
-							incWaitMsg();
-							sendReturnMessage(false);
-						}
-					} else {
-						System.out.println("Recovery initiated");
-						if (outgoingLinks.size() > 0) {
-							for (Link l : outgoingLinks.values()) {
-								incWaitMsg();
-								l.recover(collapseId);
-							}
-						} else {
-							incWaitMsg();
-							sendReturnMessage(false);
-						}
-					}
+					originatorPhatomReturnAction();
 				} else {
 					// Send Reply message back.
 					sendReturnMessage(startover);
@@ -167,74 +139,131 @@ public class Node {
 				}
 			} else if (isRecovered()) {
 				if (isOriginator()) {
-					if (startover) {
-						startover = false;
-						collapseId.newCollapse();
-						for (Link l : outgoingLinks.values()) {
-							incWaitMsg();
-							l.phantomize(collapseId, null);
-						}
-						phantomized = true;
-						if (outgoingLinks.isEmpty()) {
-							incWaitMsg();
-							sendReturnMessage(false);
-						}
-					} else if (isPhantomLive()) {
-						state = NodeState.Built;
-						if (outgoingLinks.size() > 0) {
-							for (Link l : outgoingLinks.values()) {
-								incWaitMsg();
-								l.build(collapseId);
-							}
-						} else {
-							incWaitMsg();
-							sendReturnMessage(false);
-						}
-					} else if (isMayBeDelete()) {
-						if (outgoingLinks.size() > 0) {
-							for (Link l : outgoingLinks.values()) {
-								l.plagueDelete(collapseId);
-							}
-							outgoingLinks.clear();
-						}
+					originatorRecoveryReceivedAction();
+				} else {
+					nonOriginatorRecoveryReceivedAction();
+				}
+			} else if (isOrginatorBuilt()) {
+				state = NodeState.Built;
+				rcc = 0;
+				if (outgoingLinks.size() > 0) {
+					for (Link l : outgoingLinks.values()) {
+						incWaitMsg();
+						l.build(collapseId);
 					}
 				} else {
-					if (startover) {
-						sendReturnMessage(true);
-						startover = false;
-					} else if (isPhantomLive()) {
-						state = NodeState.Built;
-						if (outgoingLinks.size() > 0) {
-							for (Link l : outgoingLinks.values()) {
-								incWaitMsg();
-								l.build(collapseId);
-							}
-						} else {
-							sendReturnMessage(false);
-						}
-					} else if (isMayBeDelete()) {
-						sendReturnMessage(false);
-					}
+					incWaitMsg();
+					sendReturnMessage(false);
 				}
 			} else if (isPhantomLive()) {
 				if (isOriginator()) {
 					// Clean up Saved collapse id and stuff.
-					if (pc == 0 && rcc == 0) {
-						state = NodeState.Healthy;
-						nodeParent = -1;
-						collapseId = null;
-					}
+					state = NodeState.Healthy;
+					nodeParent = -1;
+					collapseId = null;
+					rcc = 0;
 				} else {
 					sendReturnMessage(false);
-					if (pc == 0 && rcc == 0) {
-						state = NodeState.Healthy;
-						nodeParent = -1;
-						collapseId = null;
-					}
+					state = NodeState.Healthy;
+					nodeParent = -1;
+					collapseId = null;
+					rcc = 0;
 				}
 			}
 		}
 
+	}
+
+	private void nonOriginatorRecoveryReceivedAction() {
+		if (startover) {
+			sendReturnMessage(true);
+			startover = false;
+		} else if (isPhantomLive()) {
+			state = NodeState.Built;
+			for (Link l : outgoingLinks.values()) {
+				incWaitMsg();
+				l.build(collapseId);
+			}
+			if (outgoingLinks.isEmpty() && isMayBeDelete()) {
+				sendReturnMessage(false);
+			}
+		} else if (isMayBeDelete()) {
+			sendReturnMessage(false);
+		}
+	}
+
+	private void originatorRecoveryReceivedAction() {
+		if (startover) {
+			startover = false;
+			collapseId.newCollapse();
+			for (Link l : outgoingLinks.values()) {
+				incWaitMsg();
+				l.phantomize(collapseId, null);
+			}
+			phantomized = true;
+			if (outgoingLinks.isEmpty()) {
+				incWaitMsg();
+				sendReturnMessage(false);
+			}
+		} else if (isPhantomLive()) {
+			state = NodeState.Built;
+			if (outgoingLinks.size() > 0) {
+				for (Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId);
+				}
+			} else {
+				incWaitMsg();
+				sendReturnMessage(false);
+			}
+		} else if (isMayBeDelete()) {
+			if (outgoingLinks.size() > 0) {
+				for (Link l : outgoingLinks.values()) {
+					l.plagueDelete(collapseId);
+				}
+				outgoingLinks.clear();
+			}
+			if (isSimplyDead()) {
+				collapseId = null;
+				state = NodeState.Dead;
+			}
+		}
+	}
+
+	private void originatorPhatomReturnAction() {
+		if (startover) {
+			startover = false;
+			collapseId.newCollapse();
+			for (Link l : outgoingLinks.values()) {
+				incWaitMsg();
+				l.phantomize(collapseId, null);
+			}
+			phantomized = true;
+			if (outgoingLinks.isEmpty()) {
+				incWaitMsg();
+				sendReturnMessage(false);
+			}
+		} else if (isPhantomLive()) {
+			for (Link l : outgoingLinks.values()) {
+				incWaitMsg();
+				l.build(collapseId);
+			}
+			if (outgoingLinks.isEmpty()) {
+				incWaitMsg();
+				sendReturnMessage(false);
+			}
+		} else {
+			System.out.println("Recovery initiated");
+			if (outgoingLinks.size() > 0) {
+				for (Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.recover(collapseId);
+				}
+			} else {
+				incWaitMsg();
+				sendReturnMessage(false);
+			}
+		}
 	}
 
 	public boolean createLink(int dest) {
@@ -321,19 +350,23 @@ public class Node {
 			sendReturnMessage(false);
 			return;
 		}
-		for (Link l : outgoingLinks.values()) {
-			incWaitMsg();
-			l.build(collapseId);
-		}
-		if (outgoingLinks.isEmpty()) {
-			if (pc == 0 && rcc == 0) {
+		if (!isOriginator()) {
+			nodeParent = m.getSrc();
+			for (Link l : outgoingLinks.values()) {
+				incWaitMsg();
+				l.build(collapseId);
+			}
+			if (outgoingLinks.isEmpty()) {
+				rcc = 0;
 				state = NodeState.Healthy;
 				nodeParent = -1;
 				collapseId = null;
 				phantomized = false;
-			}
-			sendReturnMessage(false);
+				sendReturnMessage(false);
 
+			}
+		} else {
+			sendReturnMessage(false);
 		}
 	}
 
@@ -343,7 +376,9 @@ public class Node {
 			return;
 		} else if (collapseId.equalTo(m.getCollapseId())) {
 			rcc++;
-			if (isPhantomLive()) {
+			if (isRecovering() || m.getSrc() != nodeParent) {
+				sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+			} else if (isPhantomLive()) {
 				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.build(collapseId);
@@ -351,10 +386,7 @@ public class Node {
 				if (outgoingLinks.isEmpty()) {
 					sendReturnMessage(false);
 				}
-			} else if (isRecovering()) {
-				sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-			}
-			else {
+			} else {
 				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.recover(collapseId);
@@ -384,7 +416,7 @@ public class Node {
 		msg.send();
 	}
 
-	private void sendReturnMessageSender(boolean startover, int sender, 
+	private void sendReturnMessageSender(boolean startover, int sender,
 			CollapseId c) {
 		Message msg = new Message(MessageType.Return, nodeId, sender);
 		msg.setStartOver(startover);
@@ -396,103 +428,111 @@ public class Node {
 		if (collapseId != null && collapseId.partialLessThan(m.getCollapseId())
 				|| (m.getOverride() != null
 						&& m.getOverride().equals(collapseId))) {
-			collapseId = m.getCollapseId();
-			if (phantomized) {
-				nodeParent = m.getSrc();
-				for (Link l : outgoingLinks.values()) {
-					incWaitMsg();
-					l.phantomize(collapseId, m.getOverride());
-				}
-				if (outgoingLinks.isEmpty()) {
-					sendReturnMessage(false);
-				}
-			} else {
-				sendReturnMessageSender(startover, m.getSrc(), m.getCollapseId());
-			}
+			remarkingPhantomizing(m);
 		} else {
-			if (m.getWhich() == which) {
-				rc[which]--;
-				pc++;
-			} else {
-				rc[1 - which]--;
-				pc++;
-			}
+			decRCIncPC(m);
 			if (collapseId == null) {
-				collapseId = m.getCollapseId();
-				nodeParent = m.getSrc();
-				if (isPhantomLive()) {
-					sendReturnMessage(false);
-				} else if (outgoingLinks.isEmpty()) {
-					if (isWeaklySupported()) {
-						which = 1 - which;
-					}
-					phantomized = true;
-					sendReturnMessage(false);
-				} else {
-					if (isWeaklySupported()) {
-						which = 1 - which;
-					}
-					for (Link l : outgoingLinks.values()) {
-						incWaitMsg();
-						l.phantomize(collapseId, null);
-					}
-					phantomized = true;
-
-				}
-			} else if( collapseId.equals(m.getCollapseId())) {
-				if (isBuilding() || isRecovering()) {
-					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-				}
-				else if(isPhantomLive() || phantomized) {
-					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-				}
-				else {
-					if (isWeaklySupported()) {
-						which = 1 - which;
-					}
-					nodeParent = m.getSrc();
-					for (Link l : outgoingLinks.values()) {
-						incWaitMsg();
-						l.phantomize(collapseId, null);
-					}
-					if (outgoingLinks.isEmpty()) {
-						sendReturnMessage(false);
-					}
-
-				}
-			}else if (collapseId.lessThan(m.getCollapseId())) {
-				if (isPhantomizing() || isRecovering() || isBuilding()) {
-					sendReturnMessage(true);
-				}
-				CollapseId old = collapseId;
-				collapseId = m.getCollapseId();
-				nodeParent = m.getSrc();
-				waitMsg = 0;
-				for (Link l : outgoingLinks.values()) {
-					incWaitMsg();
-					l.phantomize(collapseId, old);
-				}
-				if (outgoingLinks.isEmpty()) {
-					sendReturnMessage(false);
-				}
+				collapseAction(m);
+			} else if (collapseId.equals(m.getCollapseId())) {
+				sameCollapseAction(m);
+			} else if (collapseId.lessThan(m.getCollapseId())) {
+				collapseOverrideAction(m);
 			} else {
 				if (isPhantomized()) {
-					collapseId = new CollapseId();
-					nodeParent = nodeId;
-					for (Link l : outgoingLinks.values()) {
-						incWaitMsg();
-						l.phantomize(collapseId, null);
-					}
-					phantomized = true;
-					if (outgoingLinks.isEmpty()) {
-						incWaitMsg();
-						sendReturnMessage(false);
-					}
+					spawnNewCollapseHere();
 				} else {
 					sendReturnMessage(false);
 				}
 			}
+		}
+	}
 
+	private void collapseOverrideAction(Message m) {
+		if (isPhantomizing() || isRecovering() || isBuilding()) {
+			sendReturnMessage(true);
+		}
+		CollapseId old = collapseId;
+		collapseId = m.getCollapseId();
+		nodeParent = m.getSrc();
+		waitMsg = 0;
+		for (Link l : outgoingLinks.values()) {
+			incWaitMsg();
+			l.phantomize(collapseId, old);
+		}
+		phantomized = true;
+		if (outgoingLinks.isEmpty()) {
+			sendReturnMessage(false);
+		}
+	}
+
+	private void sameCollapseAction(Message m) {
+		if (isBuilding() || isRecovering()) {
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+		} else if (isPhantomLive() || phantomized) {
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+		} else {
+			if (isWeaklySupported()) {
+				which = 1 - which;
+			}
+			nodeParent = m.getSrc();
+			phantomSpreadOrReturn();
+		}
+	}
+
+	private void collapseAction(Message m) {
+		collapseId = m.getCollapseId();
+		nodeParent = m.getSrc();
+		if (isPhantomLive()) {
+			sendReturnMessage(false);
+		} else if (outgoingLinks.isEmpty()) {
+			if (isWeaklySupported()) {
+				which = 1 - which;
+			}
+			phantomized = true;
+			sendReturnMessage(false);
+		} else {
+			if (isWeaklySupported()) {
+				which = 1 - which;
+			}
+			phantomSpreadOrReturn();
+		}
+	}
+
+	private void phantomSpreadOrReturn() {
+		for (Link l : outgoingLinks.values()) {
+			incWaitMsg();
+			l.phantomize(collapseId, null);
+		}
+		phantomized = true;
+		if (outgoingLinks.isEmpty()) {
+			sendReturnMessage(false);
+		}
+	}
+
+	private void decRCIncPC(Message m) {
+		if (m.getWhich() == which) {
+			rc[which]--;
+			pc++;
+		} else {
+			rc[1 - which]--;
+			pc++;
+		}
+	}
+
+	private void remarkingPhantomizing(Message m) {
+		collapseId = m.getCollapseId();
+		waitMsg = 0;
+		nodeParent = m.getSrc();
+		if (phantomized) {
+			for (Link l : outgoingLinks.values()) {
+				incWaitMsg();
+				l.phantomize(collapseId, m.getOverride());
+			}
+			if (outgoingLinks.isEmpty()) {
+				sendReturnMessage(false);
+			}
+		} else {
+			sendReturnMessageSender(startover, m.getSrc(), m.getCollapseId());
 		}
 	}
 
@@ -510,12 +550,68 @@ public class Node {
 			}
 			outgoingLinks.clear();
 			if (isSimplyDead()) {
+				collapseId = null;
 				state = NodeState.Dead;
 			}
 		}
 	}
 
 	private void deleteMessage(Message m) {
+		decrementCountInDelMsg(m);
+		if (isGarbage()) {
+			sendPlagueOrDelMsg();
+		}
+		if (isSimplyDead()) {
+			collapseId = null;
+			state = NodeState.Dead;
+			return;
+		} else if (isHealthy() || isGarbage()) {
+			return;
+		} else if (isWeaklySupported()) {
+			startPhantomizing();
+		} else {
+			if (isPhantomizing() || isRecovering() || isBuilding()) {
+				sendReturnMessage(true);
+				waitMsg = 0;
+			}
+			if (!isPhantomLive()) {
+				spawnNewCollapseHere();
+			}
+		}
+	}
+
+	private void spawnNewCollapseHere() {
+		collapseId = new CollapseId();
+		nodeParent = nodeId;
+		for (Link l : outgoingLinks.values()) {
+			incWaitMsg();
+			l.phantomize(collapseId, null);
+		}
+		phantomized = true;
+		if (outgoingLinks.isEmpty()) {
+			incWaitMsg();
+			sendReturnMessage(false);
+		}
+	}
+
+	private void startPhantomizing() {
+		which = 1 - which;
+		spawnNewCollapseHere();
+	}
+
+	private void sendPlagueOrDelMsg() {
+		if (phantomized) {
+			for (Link l : outgoingLinks.values()) {
+				l.plagueDelete(collapseId);
+			}
+		} else if (isSimplyDead()) {
+			for (Link l : outgoingLinks.values()) {
+				l.delete(collapseId);
+			}
+		}
+	}
+
+	private void decrementCountInDelMsg(Message m) {
 		if (m.getPhantom()) {
 			pc--;
 			if (m.getCollapseId() != null
@@ -526,57 +622,6 @@ public class Node {
 			rc[which]--;
 		else
 			rc[1 - which]--;
-		if (isGarbage()) {
-			if (phantomized) {
-				for (Link l : outgoingLinks.values()) {
-					l.plagueDelete(collapseId);
-				}
-			} else if (isSimplyDead()) {
-				for (Link l : outgoingLinks.values()) {
-					l.delete(collapseId);
-				}
-			}
-		}
-		if (isSimplyDead()) {
-			state = NodeState.Dead;
-			return;
-		} else if (isHealthy() || isGarbage()) {
-			return;
-		} else if (isWeaklySupported()) {
-			which = 1 - which;
-			collapseId = new CollapseId();
-			nodeParent = nodeId;
-			for (Link l : outgoingLinks.values()) {
-				incWaitMsg();
-				l.phantomize(collapseId, null);
-			}
-			phantomized = true;
-			if (outgoingLinks.isEmpty()) {
-				incWaitMsg();
-				sendReturnMessage(false);
-			}
-		} else {
-			if (isPhantomizing() || isRecovering() || isBuilding()) {
-				sendReturnMessage(true);
-				waitMsg = 0;
-			}
-			if (!isPhantomLive()) {
-				collapseId = new CollapseId();
-				nodeParent = nodeId;
-				for (Link l : outgoingLinks.values()) {
-					incWaitMsg();
-					l.phantomize(collapseId, null);
-				}
-				phantomized = true;
-				if (outgoingLinks.isEmpty()) {
-					incWaitMsg();
-					sendReturnMessage(false);
-				}
-
-			}
-
-		}
-
 	}
 
 	private void createLinkReturnMessage(Message m) {
@@ -621,10 +666,10 @@ public class Node {
 	}
 
 	public void printNode() {
-		String co = collapseId!=null?collapseId.toString():"null";
+		String co = collapseId != null ? collapseId.toString() : "null";
 		System.out.println("Node " + nodeId + " : " + getSRC() + "," + getWRC()
-				+ " ," + pc + ", " + rcc + ", " + state + " ph: " + phantomized+
-				" collapseID"+co+" wait "+waitMsg);
+				+ " ," + pc + ", " + rcc + ", " + state + " ph: " + phantomized
+				+ " collapseID" + co + " wait " + waitMsg);
 	}
 
 	public static void main(String args[]) {
