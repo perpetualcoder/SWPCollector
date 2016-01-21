@@ -29,7 +29,7 @@ public class Master {
 			List<Node> nodes = new ArrayList<>();
 			for (Node n : nodeMap.values()) {
 				if (n.getQu().size() > 0) {
-					System.out.println("Node id"+n.getNodeId());
+					System.out.println("Node id"+n.getNodeId()+" in process");
 					nodes.add(n);
 				}
 			}

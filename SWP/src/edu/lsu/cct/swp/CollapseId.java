@@ -26,4 +26,7 @@ public class CollapseId {
 	public boolean partialLessThan(CollapseId c) {
 		return c !=  null && cid == c.cid && in < c.in;
 	}
+	public String toString() {
+		return "<"+cid+","+in+">";
+	}
 }
