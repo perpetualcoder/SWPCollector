@@ -31,6 +31,14 @@ public class Link {
 		phantom = true;
 	}
 	
+	public void unsetPhantom() {
+		phantom = false;
+	}
+	
+	public boolean getPhantom() {
+		return phantom;
+	}
+	
 	public void delete(CollapseId collapseId) {
 		Message msg = new Message(MessageType.Delete, src, dest);
 		msg.setWhich(which);

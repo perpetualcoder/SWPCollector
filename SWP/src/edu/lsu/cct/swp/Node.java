@@ -51,8 +51,14 @@ public class Node {
 		return nodeParent == nodeId;
 	}
 
+	public boolean isLinkBuilt() {
+		for (Link l : outgoingLinks.values()) {
+			if (l.getPhantom()) return false;
+		}
+		return true;
+	}
 	public boolean isWeaklySupported() {
-		return rc[1 - which] > 0 && rc[which] == 0 && pc == 0 && rcc == 0
+		return getWRC() > 0 && getSRC() == 0 && pc == 0 && rcc == 0
 				&& phantomized == false && collapseId == null && waitMsg == 0;
 	}
 
@@ -73,7 +79,7 @@ public class Node {
 
 	public boolean isRecovered() {
 		return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
-				&& waitMsg == 0;
+				&& waitMsg == 0 && getSRC() == 0;
 	}
 
 	public boolean isOrginatorBuilt() {
@@ -143,7 +149,7 @@ public class Node {
 				} else {
 					nonOriginatorRecoveryReceivedAction();
 				}
-			} else if (isOrginatorBuilt()) {
+			} else if (isOriginator()&& isPhantomLive() && !isLinkBuilt()) {
 				state = NodeState.Built;
 				rcc = 0;
 				if (outgoingLinks.size() > 0) {
@@ -155,7 +161,7 @@ public class Node {
 					incWaitMsg();
 					sendReturnMessage(false);
 				}
-			} else if (isPhantomLive()) {
+			} else if (isPhantomLive() && pc == 0) {
 				if (isOriginator()) {
 					// Clean up Saved collapse id and stuff.
 					state = NodeState.Healthy;
@@ -168,6 +174,10 @@ public class Node {
 					nodeParent = -1;
 					collapseId = null;
 					rcc = 0;
+				}
+			} else if (isPhantomLive()) {
+				if (!isOriginator()) {
+					sendReturnMessage(false);
 				}
 			}
 		}
@@ -308,6 +318,9 @@ public class Node {
 			case CreateLinkReturn:
 				createLinkReturnMessage(m);
 				break;
+			case LinkBuildReturn:
+				linkBuildReturnMessage(m);
+				break;
 			case Delete:
 				deleteMessage(m);
 				break;
@@ -330,6 +343,13 @@ public class Node {
 		}
 	}
 
+	private void linkBuildReturnMessage(Message m) {
+		int src = m.getSrc();
+		Link lnk = outgoingLinks.get(src);
+		lnk.setWhich(m.getWhich());
+		lnk.unsetPhantom();
+	}
+
 	private void buildMessage(Message m) {
 		if (isHealthy()) {
 			sendReturnMessage(false);
@@ -347,7 +367,7 @@ public class Node {
 		msg.setWhich(which);
 		msg.send();
 		if (isBuilding() || !collapseId.equalTo(m.getCollapseId())) {
-			sendReturnMessage(false);
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 			return;
 		}
 		if (!isOriginator()) {
@@ -371,6 +391,7 @@ public class Node {
 	}
 
 	private void recoverMessage(Message m) {
+		printNode();
 		if (m.getCollapseId().lessThan(collapseId)) {
 			sendReturnMessage(false);
 			return;
@@ -471,7 +492,7 @@ public class Node {
 		} else if (isPhantomLive() || phantomized) {
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 		} else {
-			if (isWeaklySupported()) {
+			if (getSRC() == 0 && getWRC() > 0) {
 				which = 1 - which;
 			}
 			nodeParent = m.getSrc();
@@ -480,19 +501,24 @@ public class Node {
 	}
 
 	private void collapseAction(Message m) {
+		System.out.println("Before collapse");
+		printNode();
 		collapseId = m.getCollapseId();
 		nodeParent = m.getSrc();
 		if (isPhantomLive()) {
 			sendReturnMessage(false);
 		} else if (outgoingLinks.isEmpty()) {
-			if (isWeaklySupported()) {
+			if (getSRC() == 0 && getWRC() > 0) {
 				which = 1 - which;
 			}
 			phantomized = true;
 			sendReturnMessage(false);
 		} else {
-			if (isWeaklySupported()) {
+			if (getSRC() == 0 && getWRC() > 0) {
+				System.out.println("WEAKLY SUPPORTED NODE");
+				printNode();
 				which = 1 - which;
+				printNode();				
 			}
 			phantomSpreadOrReturn();
 		}
