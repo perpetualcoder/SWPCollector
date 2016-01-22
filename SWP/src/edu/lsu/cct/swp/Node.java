@@ -174,6 +174,7 @@ public class Node {
 					waitMsg = 0;
 					phantomized = false;
 					startover = false;
+					state = NodeState.Healthy;
 				}
 			} else if (isRecovered()) {
 				if (isOriginator()) {
@@ -409,7 +410,7 @@ public class Node {
 			rcc++;
 			if (isRecovering() || m.getSrc() != nodeParent) {
 				sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-			} else if (isPhantomLive()) {
+			} else if (isPhantomLive() && phantomized) {
 				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.build(collapseId);
@@ -417,7 +418,11 @@ public class Node {
 				if (outgoingLinks.isEmpty()) {
 					sendReturnMessage(false);
 				}
-			} else {
+			} else if(isPhantomLive() && !phantomized) {
+				rcc--;
+				sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+			}
+			else {
 				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.recover(collapseId);
