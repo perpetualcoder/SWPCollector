@@ -16,13 +16,15 @@ public class Node {
 	private int pc, rcc;
 	private int which;
 	private boolean startover;
-	private HashMap<Integer, Link> outgoingLinks;
+	public HashMap<Integer, Link> outgoingLinks;
 	private Queue qu;
 	private CollapseId collapseId;
 	private int waitMsg;
 	private NodeState state;
 	private int nodeParent;
 	private boolean phantomized;
+	
+	public boolean mark;
 
 	static AtomicInteger gCounter = new AtomicInteger();
 	static Logger logger = Logger.getLogger(Node.class);
@@ -706,7 +708,8 @@ public class Node {
 		String co = collapseId != null ? collapseId.toString() : "null";
 		System.out.println("Node " + nodeId + " : " + getSRC() + "," + getWRC()
 				+ " ," + pc + ", " + rcc + ", " + state + " ph: " + phantomized
-				+ " collapseID" + co + " wait " + waitMsg);
+				+ " collapseID" + co + " wait " + waitMsg+
+				"mark "+mark);
 	}
 
 	public static void main(String args[]) {
