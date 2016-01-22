@@ -53,13 +53,20 @@ public class Node {
 
 	public boolean isLinkBuilt() {
 		for (Link l : outgoingLinks.values()) {
-			if (l.getPhantom()) return false;
+			if (l.getPhantom())
+				return false;
 		}
 		return true;
 	}
+
 	public boolean isWeaklySupported() {
 		return getWRC() > 0 && getSRC() == 0 && pc == 0 && rcc == 0
 				&& phantomized == false && collapseId == null && waitMsg == 0;
+	}
+
+	public boolean isPhantomWeaklySupported() {
+		return getWRC() > 0 && getSRC() == 0 && pc > 0 && rcc == 0
+				&& phantomized == false && collapseId != null && waitMsg == 0;
 	}
 
 	public boolean isPhantomizing() {
@@ -143,14 +150,7 @@ public class Node {
 					if (startover)
 						startover = false;
 				}
-			} else if (isRecovered()) {
-				if (isOriginator()) {
-					originatorRecoveryReceivedAction();
-				} else {
-					nonOriginatorRecoveryReceivedAction();
-				}
-			} else if (isOriginator()&& isPhantomLive() && !isLinkBuilt()) {
-				state = NodeState.Built;
+			} else if (isPhantomLive() && !isLinkBuilt()) {
 				rcc = 0;
 				if (outgoingLinks.size() > 0) {
 					for (Link l : outgoingLinks.values()) {
@@ -161,23 +161,23 @@ public class Node {
 					incWaitMsg();
 					sendReturnMessage(false);
 				}
-			} else if (isPhantomLive() && pc == 0) {
-				if (isOriginator()) {
-					// Clean up Saved collapse id and stuff.
-					state = NodeState.Healthy;
-					nodeParent = -1;
-					collapseId = null;
-					rcc = 0;
-				} else {
+			} else if (isPhantomLive() && isLinkBuilt()) {
+				rcc = 0;
+				if (!isOriginator())
 					sendReturnMessage(false);
-					state = NodeState.Healthy;
-					nodeParent = -1;
+				if (pc == 0) {
 					collapseId = null;
+					nodeParent = -1;
 					rcc = 0;
+					waitMsg = 0;
+					phantomized = false;
+					startover = false;
 				}
-			} else if (isPhantomLive()) {
-				if (!isOriginator()) {
-					sendReturnMessage(false);
+			} else if (isRecovered()) {
+				if (isOriginator()) {
+					originatorRecoveryReceivedAction();
+				} else {
+					nonOriginatorRecoveryReceivedAction();
 				}
 			}
 		}
@@ -364,36 +364,44 @@ public class Node {
 			rc[which]++;
 			pc--;
 		}
+
 		msg.setWhich(which);
 		msg.send();
 		if (isBuilding() || !collapseId.equalTo(m.getCollapseId())) {
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 			return;
 		}
-		if (!isOriginator()) {
+		if (!isOriginator() && !isLinkBuilt()) {
 			nodeParent = m.getSrc();
 			for (Link l : outgoingLinks.values()) {
 				incWaitMsg();
 				l.build(collapseId);
 			}
 			if (outgoingLinks.isEmpty()) {
+				sendReturnMessage(false);
 				rcc = 0;
 				state = NodeState.Healthy;
 				nodeParent = -1;
 				collapseId = null;
 				phantomized = false;
-				sendReturnMessage(false);
-
 			}
 		} else {
-			sendReturnMessage(false);
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+			if (!isOriginator() && pc == 0) {
+				rcc = 0;
+				state = NodeState.Healthy;
+				nodeParent = -1;
+				collapseId = null;
+				phantomized = false;
+				startover = false;
+			}
 		}
 	}
 
 	private void recoverMessage(Message m) {
 		printNode();
 		if (m.getCollapseId().lessThan(collapseId)) {
-			sendReturnMessage(false);
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 			return;
 		} else if (collapseId.equalTo(m.getCollapseId())) {
 			rcc++;
@@ -416,7 +424,6 @@ public class Node {
 					sendReturnMessage(false);
 				}
 			}
-
 		}
 	}
 
@@ -460,9 +467,11 @@ public class Node {
 				collapseOverrideAction(m);
 			} else {
 				if (isPhantomized()) {
+					rcc = 0;
 					spawnNewCollapseHere();
 				} else {
-					sendReturnMessage(false);
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
 				}
 			}
 		}
@@ -475,6 +484,7 @@ public class Node {
 		CollapseId old = collapseId;
 		collapseId = m.getCollapseId();
 		nodeParent = m.getSrc();
+		rcc = 0;
 		waitMsg = 0;
 		for (Link l : outgoingLinks.values()) {
 			incWaitMsg();
@@ -492,7 +502,7 @@ public class Node {
 		} else if (isPhantomLive() || phantomized) {
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 		} else {
-			if (getSRC() == 0 && getWRC() > 0) {
+			if (isPhantomWeaklySupported()) {
 				which = 1 - which;
 			}
 			nodeParent = m.getSrc();
@@ -514,11 +524,11 @@ public class Node {
 			phantomized = true;
 			sendReturnMessage(false);
 		} else {
-			if (getSRC() == 0 && getWRC() > 0) {
+			if (isPhantomWeaklySupported()) {
 				System.out.println("WEAKLY SUPPORTED NODE");
 				printNode();
 				which = 1 - which;
-				printNode();				
+				printNode();
 			}
 			phantomSpreadOrReturn();
 		}
@@ -601,6 +611,7 @@ public class Node {
 				waitMsg = 0;
 			}
 			if (!isPhantomLive()) {
+				rcc = 0;
 				spawnNewCollapseHere();
 			}
 		}
