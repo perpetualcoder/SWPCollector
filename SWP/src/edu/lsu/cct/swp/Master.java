@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 public class Master {
 	public final Random RAND = new Random();
+	
+	public Node[] no;
 
 	private HashMap<Integer, Node> nodeMap;
 
@@ -19,7 +21,17 @@ public class Master {
 	public Node getNode(int nodeId) {
 		return nodeMap.get(nodeId);
 	}
-
+	
+	public void printAllNodes() {
+		for (int i = 0; i < no.length; i++) {
+			if (no[i] == null)
+				continue;
+			assert( no[i].getSRC() > 0);
+			assert(	no[i].getState() == NodeState.Healthy);
+			no[i].printNode();
+		}
+	}
+	
 	public Node createNode() {
 		Node n = new Node();
 		nodeMap.put(n.getNodeId(), n);
@@ -46,18 +58,17 @@ public class Master {
 	public void processAllMessages() {
 		while (true) {
 			List<Node> nodes = new ArrayList<>();
-			System.out.println("Mailbox has");
+			String r=" ";
 			for (Node n : nodeMap.values()) {
 				if (n.getQu().size() > 0) {
-					System.out.println("Node id"+n.getNodeId()+" in process");
+					r = r+ " , "+n.getNodeId();
 					nodes.add(n);
 				}
 			}
+			System.out.println("Mailbox has messages for "+r);
 			if (nodes.size() == 0) {
 				break;
 			}
-			System.out.println("There are "+nodes.size()+" nodes have"
-					+ "messages");
 			while (nodes.size() > 0) {
 				int n = RAND.nextInt(nodes.size());
 				Node node = nodes.get(n);
@@ -65,6 +76,7 @@ public class Master {
 				if (node.getQu().size() == 0)
 					nodes.remove(node);
 			}
+			printAllNodes();
 			System.out.println("---Mailbox---");
 		}
 	}

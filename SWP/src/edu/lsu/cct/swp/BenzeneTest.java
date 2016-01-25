@@ -2,9 +2,9 @@ package edu.lsu.cct.swp;
 
 public class BenzeneTest extends junit.framework.TestCase {
 
-	public static int count = 6;
+	public static int count = 4;
 	public static int NumBenzene = 2;
-	public static int totalNodes = count + (NumBenzene - 1) * 4;
+	public static int totalNodes = count + (NumBenzene - 1) * (count - 2);
 	private Node node[] = new Node[totalNodes];
 	private Node root;
 
@@ -12,6 +12,7 @@ public class BenzeneTest extends junit.framework.TestCase {
 
 	public void testTwoRingOneDel() {
 		Message.master = master;
+		master.no = node;
 		Node root = master.createNode();
 		Node prev = root;
 		int countDone = 0;
@@ -60,7 +61,7 @@ public class BenzeneTest extends junit.framework.TestCase {
 		for (int i = 0; i < NumBenzene; i++) {
 			root.deleteLink(link);
 			if (i == 0) {
-				link = 7;
+				link = 5;
 			} else {
 				link = link + 4;
 			}
@@ -118,12 +119,12 @@ public class BenzeneTest extends junit.framework.TestCase {
 			master.processAllMessages();
 			prev = node[i];
 		}
-		node[5].createLink(node[0].getNodeId());
+		node[count - 1].createLink(node[0].getNodeId());
 		master.processAllMessages();
-		node[0].createLink(node[5].getNodeId());
+		node[0].createLink(node[count - 1].getNodeId());
 		master.processAllMessages();
-		prev = node[5];
-		for (int i = 4; i >= 0; i--) {
+		prev = node[count - 1];
+		for (int i = count - 2; i >= 0; i--) {
 			prev.createLink(node[i].getNodeId());
 			master.processAllMessages();
 			prev = node[i];

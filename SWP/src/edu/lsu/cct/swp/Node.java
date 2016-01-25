@@ -80,6 +80,11 @@ public class Node {
 		return (pc > 0) && (rcc == 0) && (phantomized == true)
 				&& (collapseId != null) && (waitMsg == 0);
 	}
+	
+	public boolean isPhantomizedNow() {
+		return getSRC() == 0 && getWRC()==0 && (pc > 0) && (rcc == 0) && (phantomized == false)
+				&& (collapseId != null) && (waitMsg == 0);
+	}
 
 	public boolean isRecovering() {
 		return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
@@ -152,13 +157,15 @@ public class Node {
 				}
 			} else if (isPhantomLive() && !isLinkBuilt()) {
 				rcc = 0;
+				System.out.println("Building");
 				if (outgoingLinks.size() > 0) {
 					for (Link l : outgoingLinks.values()) {
 						incWaitMsg();
 						l.build(collapseId);
 					}
 				} else {
-					incWaitMsg();
+					if (isOriginator())
+						incWaitMsg();
 					sendReturnMessage(false);
 				}
 			} else if (isPhantomLive() && isLinkBuilt()) {
@@ -255,6 +262,7 @@ public class Node {
 				sendReturnMessage(false);
 			}
 		} else if (isPhantomLive()) {
+			System.out.println("Building started by originator");
 			for (Link l : outgoingLinks.values()) {
 				incWaitMsg();
 				l.build(collapseId);
@@ -346,6 +354,10 @@ public class Node {
 	}
 
 	private void linkBuildReturnMessage(Message m) {
+		if (!m.getCollapseId().equals(collapseId)) {
+			System.out.println(" ignored" );
+			return;
+		}
 		int src = m.getSrc();
 		Link lnk = outgoingLinks.get(src);
 		lnk.setWhich(m.getWhich());
@@ -366,7 +378,7 @@ public class Node {
 			rc[which]++;
 			pc--;
 		}
-
+		msg.setCollapseId(m.getCollapseId());
 		msg.setWhich(which);
 		msg.send();
 		if (isBuilding() || !collapseId.equalTo(m.getCollapseId())) {
@@ -434,11 +446,12 @@ public class Node {
 	}
 
 	private void returnMessage(Message m) {
-		System.out.println("Received this message");
 		if (collapseId.equalTo(m.getCollapseId())) {
-			System.out.println("Running this message");
 			decWaitMsg();
 			startover = m.isStartOver();
+		}
+		else {
+			System.out.println("Ignored the Message");
 		}
 	}
 
@@ -473,7 +486,7 @@ public class Node {
 			printNode();
 			System.out.println(" Partial less phantom or override");
 			remarkingPhantomizing(m);
-		} else if (m.getOverride() != null && m.getCollapseId() == collapseId) {
+		} else if (m.getOverride() != null && m.getCollapseId().equals(collapseId)) {
 			sendReturnMessageSender(false, m.getSrc(), collapseId);
 		}
 		else {
@@ -489,7 +502,7 @@ public class Node {
 				collapseOverrideAction(m);
 			} else {
 				System.out.println("Less than collapse");
-				if (isPhantomized()) {
+				if (isPhantomizedNow()) {
 					rcc = 0;
 					System.out.println("New  collapse due to all inc ph");
 					spawnNewCollapseHere();
@@ -757,7 +770,7 @@ public class Node {
 		System.out.println("Node " + nodeId + " : " + getSRC() + "," + getWRC()
 				+ " ," + pc + ", " + rcc + ", " + state + " ph: " + phantomized
 				+ " collapseID" + co + " wait " + waitMsg+
-				"mark "+mark);
+				"mark "+mark+" which = "+which);
 	}
 
 	public static void main(String args[]) {

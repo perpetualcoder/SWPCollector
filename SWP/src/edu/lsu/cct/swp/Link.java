@@ -85,7 +85,6 @@ public class Link {
 		msg.setCollapseId(collapseId);
 		msg.setWhich();
 		msg.send();
-		msg.printMsg();
 		msg.printMsg("receiving");
 	}
 	
