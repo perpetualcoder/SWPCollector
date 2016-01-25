@@ -8,6 +8,15 @@ public class Message {
 	private int dest;
 	private int which;
 	private boolean phantom;
+	private boolean already;
+	public boolean isAlready() {
+		return already;
+	}
+
+	public void setAlready(boolean already) {
+		this.already = already;
+	}
+
 	private CollapseId collapseId;
 	private boolean startOver;
 	private CollapseId Override;
@@ -29,6 +38,15 @@ public class Message {
 				" collapseId" + coll +
 				" override"+ov);
 	}
+	public void printMsg(String send) {
+		String coll = collapseId!=null ?collapseId.toString():"null";
+		String ov = Override!=null?Override.toString():"null";
+		System.out.println(" Node "+dest+" is "+send+"  msg "+ type.toString()+
+				" from "+src+ "which = "+which+" phantom = "+phantom+
+				" collapseId" + coll +
+				" override"+ov);
+	}
+
 
 	public boolean send() {
 		assert(master != null);

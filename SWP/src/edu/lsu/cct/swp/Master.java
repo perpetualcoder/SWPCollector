@@ -46,6 +46,7 @@ public class Master {
 	public void processAllMessages() {
 		while (true) {
 			List<Node> nodes = new ArrayList<>();
+			System.out.println("Mailbox has");
 			for (Node n : nodeMap.values()) {
 				if (n.getQu().size() > 0) {
 					System.out.println("Node id"+n.getNodeId()+" in process");
@@ -64,6 +65,7 @@ public class Master {
 				if (node.getQu().size() == 0)
 					nodes.remove(node);
 			}
+			System.out.println("---Mailbox---");
 		}
 	}
 

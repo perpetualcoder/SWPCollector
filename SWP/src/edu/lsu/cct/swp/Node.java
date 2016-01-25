@@ -141,8 +141,6 @@ public class Node {
 	public void decWaitMsg() {
 		waitMsg--;
 		if (waitMsg == 0) {
-			printNode();
-			System.out.println("is phantomized" + isPhantomized());
 			if (isPhantomized()) {
 				if (isOriginator()) {
 					originatorPhatomReturnAction();
@@ -449,6 +447,7 @@ public class Node {
 		msg.setStartOver(startover);
 		msg.setCollapseId(collapseId);
 		msg.send();
+		msg.printMsg("receiving");
 	}
 
 	private void sendReturnMessageSender(boolean startover, int sender,
@@ -457,31 +456,61 @@ public class Node {
 		msg.setStartOver(startover);
 		msg.setCollapseId(c);
 		msg.send();
+		msg.printMsg("receiving");
 	}
 
 	private void phantomizeMessage(Message m) {
+		System.out.println("Before processing ph message");
+		printNode();
+		if (!m.isAlready()) {
+			decRCIncPC(m);
+		}
+		assert(getSRC() >=0 && getWRC() >= 0);
 		if (collapseId != null && collapseId.partialLessThan(m.getCollapseId())
 				|| (m.getOverride() != null
 						&& m.getOverride().equals(collapseId))) {
+			printNode();
+			System.out.println(" Partial less phantom or override");
 			remarkingPhantomizing(m);
-		} else {
-			decRCIncPC(m);
+		} else if (m.getOverride() != null && m.getCollapseId() == collapseId) {
+			sendReturnMessageSender(false, m.getSrc(), collapseId);
+		}
+		else {
+			
 			if (collapseId == null) {
+				System.out.println("null collapse");
 				collapseAction(m);
 			} else if (collapseId.equals(m.getCollapseId())) {
+				System.out.println("Same Collapse");
 				sameCollapseAction(m);
 			} else if (collapseId.lessThan(m.getCollapseId())) {
+				System.out.println("Override collapse due to more than");
 				collapseOverrideAction(m);
 			} else {
+				System.out.println("Less than collapse");
 				if (isPhantomized()) {
 					rcc = 0;
+					System.out.println("New  collapse due to all inc ph");
 					spawnNewCollapseHere();
-				} else {
+				} else if (isPhantomWeaklySupported()) {
 					sendReturnMessageSender(false, m.getSrc(),
 							m.getCollapseId());
+					rcc = 0;
+					which = 1- which;
+					System.out.println("New  collapse due to all inc ph");
+					spawnNewCollapseHere();
+				}
+				else {
+					System.out.println("return message");
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
+					
 				}
 			}
 		}
+		System.out.println("After processing ph message");
+		printNode();
+		assert(getSRC() >=0 && getWRC() >= 0);
 	}
 
 	private void collapseOverrideAction(Message m) {
@@ -493,6 +522,10 @@ public class Node {
 		nodeParent = m.getSrc();
 		rcc = 0;
 		waitMsg = 0;
+		if (!phantomized) {
+			sendReturnMessage(false);
+			return;
+		}
 		for (Link l : outgoingLinks.values()) {
 			incWaitMsg();
 			l.phantomize(collapseId, old);
@@ -505,14 +538,17 @@ public class Node {
 
 	private void sameCollapseAction(Message m) {
 		if (isBuilding() || isRecovering()) {
+			System.out.println("Return due to building or recovering");
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 		} else if (isPhantomLive() || phantomized) {
+			System.out.println(" Ph live or phed");
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 		} else {
 			if (isPhantomWeaklySupported()) {
 				which = 1 - which;
 			}
 			nodeParent = m.getSrc();
+			System.out.println("Spreading pH");
 			phantomSpreadOrReturn();
 		}
 	}
@@ -523,12 +559,15 @@ public class Node {
 		collapseId = m.getCollapseId();
 		nodeParent = m.getSrc();
 		if (isPhantomLive()) {
+			printNode();
+			System.out.println("Phantom Live state");
 			sendReturnMessage(false);
 		} else if (outgoingLinks.isEmpty()) {
 			if (getSRC() == 0 && getWRC() > 0) {
 				which = 1 - which;
 			}
 			phantomized = true;
+			System.out.println(" no outgoing link");
 			sendReturnMessage(false);
 		} else {
 			if (isPhantomWeaklySupported()) {
@@ -537,8 +576,11 @@ public class Node {
 				which = 1 - which;
 				printNode();
 			}
+			System.out.println("Phantom Spread");
 			phantomSpreadOrReturn();
 		}
+		System.out.println("After Collapse");
+		printNode();
 	}
 
 	private void phantomSpreadOrReturn() {

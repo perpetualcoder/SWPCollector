@@ -45,6 +45,7 @@ public class Link {
 		if (phantom) msg.setPhantom();
 		msg.setCollapseId(collapseId);
 		msg.send();
+		msg.printMsg("receiving");
 	}
 	
 	public void plagueDelete(CollapseId collapseId) {
@@ -53,22 +54,30 @@ public class Link {
 		msg.setPhantom();
 		msg.setCollapseId(collapseId);
 		msg.send();
+		msg.printMsg("receiving");
 	}
 	
 	public void phantomize(CollapseId collapseId, CollapseId Override) {
 		Message msg = new Message(MessageType.Phantomize, src, dest);
 		msg.setWhich(which);
+		if (getPhantom()) {
+			msg.setAlready(true);
+		}
+		else
+			msg.setAlready(false);
 		msg.setPhantom();
 		setPhantom();
 		msg.setCollapseId(collapseId);
 		msg.setOverride(Override);
 		msg.send();
+		msg.printMsg("receiving");
 	}
 	
 	public void recover(CollapseId collapseId) {
 		Message msg = new Message(MessageType.Recover, src, dest);
 		msg.setCollapseId(collapseId);
 		msg.send();
+		msg.printMsg("receiving");
 	}
 
 	public void build(CollapseId collapseId) {
@@ -76,6 +85,8 @@ public class Link {
 		msg.setCollapseId(collapseId);
 		msg.setWhich();
 		msg.send();
+		msg.printMsg();
+		msg.printMsg("receiving");
 	}
 	
 
