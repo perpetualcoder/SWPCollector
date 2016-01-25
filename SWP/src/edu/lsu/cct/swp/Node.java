@@ -38,7 +38,7 @@ public class Node {
 		pc = rcc = 0;
 		which = 0;
 		startover = phantomized = false;
-		state = NodeState.Dead;
+		state = NodeState.Healthy;
 		collapseId = null;
 		waitMsg = 0;
 		nodeParent = -1;
@@ -309,6 +309,7 @@ public class Node {
 	}
 
 	public void processQueue() {
+    assert state != NodeState.Dead;
 		if (qu.size() > 0) {
 			Message m = (Message) qu.poll();
 			m.printMsg();
