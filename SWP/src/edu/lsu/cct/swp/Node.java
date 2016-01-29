@@ -167,6 +167,7 @@ public class Node {
 					if (getSRC() > 0)
 						System.out.println("Build Children");
 					else {
+						state = NodeState.Recovering;
 						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
 							l.recover(collapseId, myWeight);
@@ -175,9 +176,104 @@ public class Node {
 							incWaitMsg();
 							sendReturnMessage(false);
 						}
-					}						
+					}
 				} else {
 					sendReturnMessage(false);
+				}
+			}
+
+		}
+		if (waitMsg == 0 && rcc == pc) {
+			if (isRecovering()) {
+				if (isOriginator()) {
+					if (startover) {
+						startover = false;
+						rerecover = true;
+					}
+					if (rerecover == true) {
+						rerecover = false;
+						if (getSRC() == 0) {
+							rcc = 0;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								l.recover(collapseId, myWeight);
+							}
+							if (outgoingLinks.isEmpty()) {
+								incWaitMsg();
+								sendReturnMessage(false);
+							}
+						} else {
+							rcc = 0;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								// Build the children
+							}
+							if (outgoingLinks.isEmpty()) {
+								incWaitMsg();
+								sendReturnMessage(false);
+							}
+						}
+					} else if (getSRC() > 0) {
+						rcc = 0;
+						for (Link l : outgoingLinks.values()) {
+							incWaitMsg();
+							// Build the children
+						}
+						if (outgoingLinks.isEmpty()) {
+							incWaitMsg();
+							sendReturnMessage(false);
+						}
+					} else {
+						state = NodeState.Recovered;
+						rcc = 0;
+						for (Link l : outgoingLinks.values()) {
+							l.plagueDelete(collapseId, myWeight);
+						}
+						outgoingLinks.clear();
+					}
+				} else {
+					if (startover) {
+						if (rcc == pc) {
+							sendReturnMessage(true);
+						}
+					}
+					if (rerecover == true) {
+						rerecover = false;
+						if (getSRC() == 0) {
+							rcc = 0;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								l.recover(collapseId, myWeight);
+							}
+							if (outgoingLinks.isEmpty()) {
+								sendReturnMessage(false);
+							}
+						} else {
+							rcc = 0;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								// Build the children
+							}
+							if (outgoingLinks.isEmpty()) {
+								sendReturnMessage(false);
+							}
+						}
+					} else if (rcc == pc) {
+						if (getSRC() > 0) {
+							rcc = 0;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								// Build the children
+							}
+							if (outgoingLinks.isEmpty()) {
+								sendReturnMessage(false);
+							}
+						} else {
+							rcc = 0;
+							state = NodeState.Recovered;
+							sendReturnMessage(false);
+						}
+					}
 				}
 			}
 		}
@@ -329,9 +425,9 @@ public class Node {
 			case Phantomize:
 				phantomizeMessage(m);
 				break;
-			// case PlagueDelete:
-			// plagueDeleteMessage(m);
-			// break;
+			case PlagueDelete:
+				plagueDeleteMessage(m);
+				break;
 			case Return:
 				returnMessage(m);
 				break;
@@ -452,6 +548,7 @@ public class Node {
 				// to recovery state.
 			}
 		} else if (isPhantomized()) {
+			rcc++;
 			collapseId = m.getCollapseId();
 			state = NodeState.Recovering;
 			nodeParent = m.getSrc();
@@ -859,26 +956,24 @@ public class Node {
 	// }
 	// }
 	//
-	// private void plagueDeleteMessage(Message m) {
-	// System.out.println("Received this");
-	// if (m.getPhantom()) {
-	// pc--;
-	// if (m.getCollapseId().equalTo(collapseId) && rcc > 0) {
-	// rcc--;
-	// }
-	// }
-	// if (phantomized == true && m.getCollapseId().equalTo(collapseId)) {
-	// for (Link l : outgoingLinks.values()) {
-	// l.plagueDelete(collapseId);
-	// }
-	// outgoingLinks.clear();
-	// if (isSimplyDead()) {
-	// collapseId = null;
-	// state = NodeState.Dead;
-	// }
-	// }
-	// }
-	//
+	private void plagueDeleteMessage(Message m) {
+		System.out.println("Received this");
+		if (m.getPhantom()) {
+			pc--;
+			if (m.getCollapseId().equalTo(collapseId) && rcc > 0) {
+				rcc--;
+			}
+		}
+			for (Link l : outgoingLinks.values()) {
+				l.plagueDelete(collapseId,myWeight);
+			}
+			outgoingLinks.clear();
+			if (isSimplyDead()) {
+				collapseId = null;
+				state = NodeState.Dead;
+			}
+	}
+
 	private void deleteMessage(Message m) {
 		decrementCountInDelMsg(m);
 		if (isGarbage()) {
