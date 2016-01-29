@@ -84,7 +84,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 		assertTrue(" The node 1 weak count is not right",
 				node[2].getWRC() == 1);
 		// Severe the root link.
-		root.deleteLink(node[0].getNodeId());
+//		root.deleteLink(node[0].getNodeId());
 		master.mark(root);
 		// Process all the messages in the system.
 		master.processAllMessages();

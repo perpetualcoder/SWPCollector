@@ -2,7 +2,6 @@ package edu.lsu.cct.swp;
 
 public enum MessageType {
 	CreateLink ("CreateLink"), 
-	CreateLinkReturn ("CreateLinkReturn"),
 	Phantomize ("phantomize"),
 	Return ("Return"),
 	Recover ("Recover"),

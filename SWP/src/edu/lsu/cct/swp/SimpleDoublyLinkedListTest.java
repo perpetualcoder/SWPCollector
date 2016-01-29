@@ -37,7 +37,7 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 					node[i].getState() == NodeState.Healthy);
 		}
 		// Severe the root link.
-		root.deleteLink(node[0].getNodeId());
+//		root.deleteLink(node[0].getNodeId());
 		master.mark(root);
 		// Process all the messages in the system.
 		master.processAllMessages();
@@ -85,7 +85,7 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 			node[i].printNode();
 		}
 		// Severe the root link.
-		root.deleteLink(node[0].getNodeId());
+//		root.deleteLink(node[0].getNodeId());
 		// Process all the messages in the system.
 		master.mark(root);
 		master.processAllMessages();

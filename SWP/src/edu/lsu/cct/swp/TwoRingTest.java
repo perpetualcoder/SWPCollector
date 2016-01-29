@@ -124,8 +124,8 @@ public class TwoRingTest extends junit.framework.TestCase {
 		}
 		System.out.println("Ehllo!");
 		// Severe the root link.
-		root.deleteLink(node[0].getNodeId());
-		root.deleteLink(node[6].getNodeId());
+//		root.deleteLink(node[0].getNodeId());
+//		root.deleteLink(node[6].getNodeId());
 		master.mark(root);
 		// Process all the messages in the system.
 		master.processAllMessages();

@@ -20,14 +20,26 @@ public class Message {
 	private CollapseId collapseId;
 	private boolean startOver;
 	private CollapseId Override;
+	private long myOldWeight;
+	private long myNewWeight;
 	
 	static public Master master;
 
-	Message(MessageType type, int src, int dest) {
+	Message(MessageType type, int src, int dest, long old, long noob) {
 		this.type = type;
 		this.src = src;
 		this.dest = dest;
 		this.phantom = false;
+		this.myOldWeight = old;
+		this.myNewWeight = noob;
+	}
+	
+	public long getOld(){
+		return myOldWeight;
+	}
+	
+	public long getNew(){
+		return myNewWeight;
 	}
 	
 	public void printMsg() {
