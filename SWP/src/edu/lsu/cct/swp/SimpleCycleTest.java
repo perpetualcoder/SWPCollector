@@ -7,7 +7,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 
 	static Master master = new Master();
 
-	public void stestSimpleCyleDelete() {
+	public void testSimpleCyleDelete() {
 		Message.master = master;
 		master.no = node;
 		Node root = master.createNode();
@@ -50,7 +50,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 					(node[i].getState() == NodeState.Healthy
 					&& node[i].mark == true));
 		}
-		System.out.println("Hello!!!");
+		System.out.println("-----------------------------------------------------------------------------------");
 
 	}
 
@@ -102,6 +102,8 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 					&& node[i].mark == true));
 			node[i].printNode();
 		}
+		System.out.println("-----------------------------------------------------------------------------------");
+
 
 	}
 

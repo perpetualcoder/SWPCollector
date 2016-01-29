@@ -106,8 +106,9 @@ public class Node {
 	}
 
 	public boolean isRecovered() {
-		return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
-				&& waitMsg == 0 && getSRC() == 0;
+//		return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
+//				&& waitMsg == 0 && getSRC() == 0;
+		return state == NodeState.Recovered;
 	}
 
 	public boolean isOrginatorBuilt() {
@@ -286,6 +287,7 @@ public class Node {
 						}
 					} else if (getSRC() > 0) {
 						rcc = 0;
+						state = NodeState.Building;
 						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
 							l.build(collapseId, myWeight, myWeight);
@@ -571,7 +573,7 @@ public class Node {
 				state = NodeState.Healthy;
 				sendReturnMessage(false);
 			}
-		} else if (isBuilding()) {
+		} else if (isBuilding() || isHealthy()) {
 			linkBuild(m.getOld(), m.getNew());
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
 		} else if (isRecovering() && waitMsg > 0) {
@@ -629,6 +631,21 @@ public class Node {
 				if (outgoingLinks.isEmpty()) {
 					sendReturnMessage(false);
 				}
+			}
+		} else if(isRecovered()) {
+			if (m.getCollapseId().equalTo(collapseId)) {
+				linkBuild(m.getNew(), m.getNew());
+				state = NodeState.Building;
+				for(Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId, myWeight, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					sendReturnMessage(false);
+				}
+			} else {
+				System.out.println("How is this possible");
+				assert false;
 			}
 		}
 	}
@@ -725,6 +742,7 @@ public class Node {
 					l.recover(collapseId, myWeight);
 				}
 				if (outgoingLinks.isEmpty()) {
+					state = NodeState.Recovered;
 					sendReturnMessage(false);
 				}
 			} else {
