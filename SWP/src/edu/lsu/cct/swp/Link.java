@@ -80,8 +80,8 @@ public class Link {
 		msg.printMsg("receiving");
 	}
 
-	public void build(CollapseId collapseId, long old) {
-		Message msg = new Message(MessageType.Build, src, dest, old, old);
+	public void build(CollapseId collapseId, long old, long noob) {
+		Message msg = new Message(MessageType.Build, src, dest, old, noob);
 		msg.setCollapseId(collapseId);
 		msg.setWhich();
 		msg.send();

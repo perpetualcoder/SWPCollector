@@ -434,9 +434,9 @@ public class Node {
 			case Recover:
 				recoverMessage(m);
 				break;
-			// case Build:
-			// buildMessage(m);
-			// break;
+			 case Build:
+			 buildMessage(m);
+			 break;
 			}
 		}
 	}
@@ -465,6 +465,98 @@ public class Node {
 	// }
 	// }
 	//
+	private void linkBuild(long old, long noob) {
+		pc--;
+		maxWeight = maxWeight < noob ? noob : maxWeight;
+		if (getSRC() == 0) {
+			myWeight = maxWeight + 1;
+			rc[which]++;			
+		} else {
+			rc[1-which]++;
+		}
+	}
+	
+	private  void buildMessage(Message m) {
+		if(isPhantomizing()) {
+			//DO complex stuff with m.cid and cid
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+		} else if(isPhantomized()) {
+			linkBuild(m.getOld(), m.getNew());
+			nodeParent = m.getSrc();
+			collapseId = m.getCollapseId();
+			if (phantomized) {
+				state = NodeState.Building;
+				for(Link l :outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId, myWeight, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					state = NodeState.Healthy;
+					if (rcc == pc) {
+						sendReturnMessage(false);
+					}
+				}
+			} else {
+				state = NodeState.Healthy;
+				sendReturnMessage(false);
+			}
+		} else if(isBuilding()) {
+			linkBuild(m.getOld(),m.getNew());
+			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+		} else if(isRecovering() && waitMsg > 0) {
+			if (isOriginator()) {
+				if (collapseId.lessThan(m.getCollapseId())) {
+					collapseId = m.getCollapseId();
+					rerecover = true;
+					nodeParent = m.getSrc();
+				} else if(collapseId.equalTo(m.getCollapseId())) {
+					linkBuild(m.getOld(),m.getNew());
+					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				} else {
+					linkBuild(m.getOld(),m.getNew());
+					rerecover = true;
+					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				}
+			} else {
+				if (collapseId.lessThan(m.getCollapseId())) {
+					collapseId = m.getCollapseId();
+					rerecover = true;
+					sendReturnMessage(true);
+					nodeParent = m.getSrc();
+				} else if(collapseId.equalTo(m.getCollapseId())) {
+					linkBuild(m.getOld(),m.getNew());
+					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				} else {
+					linkBuild(m.getOld(),m.getNew());
+					rerecover = true;
+					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				}
+			}
+		} else if (isRecovering() && waitMsg == 0) {
+			if (collapseId.lessThan(m.getCollapseId())) {
+				collapseId = m.getCollapseId();
+				sendReturnMessage(true);
+				nodeParent = m.getSrc();
+				rcc = 0;
+				for(Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId, myWeight, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					sendReturnMessage(false);
+				}
+			} else {
+				sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				for(Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId, myWeight, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					sendReturnMessage(false);
+				}
+			}
+		}
+	}
 	// private void buildMessage(Message m) {
 	// if (isPhantomizing()) {
 	// sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
