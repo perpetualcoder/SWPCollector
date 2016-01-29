@@ -25,7 +25,7 @@ public class Node {
 	private boolean phantomized;
 	private boolean rephantomize;
 	private boolean rerecover;
-	private long myWeight;
+	public long myWeight;
 	private long maxWeight;
 
 	public boolean mark;
@@ -184,7 +184,78 @@ public class Node {
 
 		}
 		if (waitMsg == 0 && rcc == pc) {
-			if (isRecovering()) {
+			if (isBuilding()) {
+				if (isOriginator()) {
+					if(startover) {
+						rerecover = true;
+						startover = false;
+					}
+					if (rephantomize) {
+						rephantomize = false;
+						for(Link l : outgoingLinks.values()) {
+							incWaitMsg();
+							l.phantomize(collapseId, null, myWeight, myWeight);
+						}
+						if (outgoingLinks.isEmpty()) {
+							incWaitMsg();
+							sendReturnMessage(false);
+						}
+					} else if(rerecover) {
+						rerecover = false;
+						if (getSRC() > 0) {
+							// CLean Up
+						} else {
+							for(Link l : outgoingLinks.values()){
+								incWaitMsg();
+								l.recover(collapseId, myWeight);
+							}
+							if (outgoingLinks.isEmpty()) {
+								incWaitMsg();
+								sendReturnMessage(false);
+							}
+						}
+					} else {
+						state = NodeState.Healthy;
+						nodeParent = -1;
+						collapseId = null;
+						rcc = 0;
+						phantomized = false;
+					}
+				} else {
+					if(rephantomize) {
+						rephantomize = false;
+						for(Link l : outgoingLinks.values()) {
+							incWaitMsg();
+							l.phantomize(collapseId, null, myWeight, myWeight);
+						}
+						if (outgoingLinks.isEmpty()) {
+							sendReturnMessage(false);
+						}
+					} else if(startover) {
+						startover = false;
+						collapseId = null;
+						sendReturnMessage(true);
+						nodeParent = -1;
+						state = NodeState.Healthy;
+					} else if(rerecover) {
+						rerecover = false;
+						for(Link l : outgoingLinks.values()){
+							incWaitMsg();
+							l.recover(collapseId, myWeight);
+						}
+						if (outgoingLinks.isEmpty()) {
+							sendReturnMessage(false);
+						}
+					} else {
+						state = NodeState.Healthy;
+						sendReturnMessage(false);
+						nodeParent = -1;
+						collapseId = null;
+						rcc = 0;
+						phantomized = false;
+					}
+				}
+			} else if (isRecovering()) {
 				if (isOriginator()) {
 					if (startover) {
 						startover = false;
@@ -206,7 +277,7 @@ public class Node {
 							rcc = 0;
 							for (Link l : outgoingLinks.values()) {
 								incWaitMsg();
-								// Build the children
+								l.build(collapseId, myWeight, myWeight);
 							}
 							if (outgoingLinks.isEmpty()) {
 								incWaitMsg();
@@ -217,7 +288,7 @@ public class Node {
 						rcc = 0;
 						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
-							// Build the children
+							l.build(collapseId, myWeight, myWeight);
 						}
 						if (outgoingLinks.isEmpty()) {
 							incWaitMsg();
@@ -252,7 +323,7 @@ public class Node {
 							rcc = 0;
 							for (Link l : outgoingLinks.values()) {
 								incWaitMsg();
-								// Build the children
+								l.build(collapseId, myWeight, myWeight);
 							}
 							if (outgoingLinks.isEmpty()) {
 								sendReturnMessage(false);
@@ -263,7 +334,7 @@ public class Node {
 							rcc = 0;
 							for (Link l : outgoingLinks.values()) {
 								incWaitMsg();
-								// Build the children
+								l.build(collapseId, myWeight, myWeight);
 							}
 							if (outgoingLinks.isEmpty()) {
 								sendReturnMessage(false);
@@ -434,9 +505,9 @@ public class Node {
 			case Recover:
 				recoverMessage(m);
 				break;
-			 case Build:
-			 buildMessage(m);
-			 break;
+			case Build:
+				buildMessage(m);
+				break;
 			}
 		}
 	}
@@ -470,23 +541,23 @@ public class Node {
 		maxWeight = maxWeight < noob ? noob : maxWeight;
 		if (getSRC() == 0) {
 			myWeight = maxWeight + 1;
-			rc[which]++;			
+			rc[which]++;
 		} else {
-			rc[1-which]++;
+			rc[1 - which]++;
 		}
 	}
-	
-	private  void buildMessage(Message m) {
-		if(isPhantomizing()) {
-			//DO complex stuff with m.cid and cid
+
+	private void buildMessage(Message m) {
+		if (isPhantomizing()) {
+			// DO complex stuff with m.cid and cid
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-		} else if(isPhantomized()) {
+		} else if (isPhantomized()) {
 			linkBuild(m.getOld(), m.getNew());
 			nodeParent = m.getSrc();
 			collapseId = m.getCollapseId();
 			if (phantomized) {
 				state = NodeState.Building;
-				for(Link l :outgoingLinks.values()) {
+				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.build(collapseId, myWeight, myWeight);
 				}
@@ -500,22 +571,24 @@ public class Node {
 				state = NodeState.Healthy;
 				sendReturnMessage(false);
 			}
-		} else if(isBuilding()) {
-			linkBuild(m.getOld(),m.getNew());
+		} else if (isBuilding()) {
+			linkBuild(m.getOld(), m.getNew());
 			sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-		} else if(isRecovering() && waitMsg > 0) {
+		} else if (isRecovering() && waitMsg > 0) {
 			if (isOriginator()) {
 				if (collapseId.lessThan(m.getCollapseId())) {
 					collapseId = m.getCollapseId();
 					rerecover = true;
 					nodeParent = m.getSrc();
-				} else if(collapseId.equalTo(m.getCollapseId())) {
-					linkBuild(m.getOld(),m.getNew());
-					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				} else if (collapseId.equalTo(m.getCollapseId())) {
+					linkBuild(m.getOld(), m.getNew());
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
 				} else {
-					linkBuild(m.getOld(),m.getNew());
+					linkBuild(m.getOld(), m.getNew());
 					rerecover = true;
-					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
 				}
 			} else {
 				if (collapseId.lessThan(m.getCollapseId())) {
@@ -523,13 +596,15 @@ public class Node {
 					rerecover = true;
 					sendReturnMessage(true);
 					nodeParent = m.getSrc();
-				} else if(collapseId.equalTo(m.getCollapseId())) {
-					linkBuild(m.getOld(),m.getNew());
-					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+				} else if (collapseId.equalTo(m.getCollapseId())) {
+					linkBuild(m.getOld(), m.getNew());
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
 				} else {
-					linkBuild(m.getOld(),m.getNew());
+					linkBuild(m.getOld(), m.getNew());
 					rerecover = true;
-					sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
 				}
 			}
 		} else if (isRecovering() && waitMsg == 0) {
@@ -538,7 +613,7 @@ public class Node {
 				sendReturnMessage(true);
 				nodeParent = m.getSrc();
 				rcc = 0;
-				for(Link l : outgoingLinks.values()) {
+				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.build(collapseId, myWeight, myWeight);
 				}
@@ -547,7 +622,7 @@ public class Node {
 				}
 			} else {
 				sendReturnMessageSender(false, m.getSrc(), m.getCollapseId());
-				for(Link l : outgoingLinks.values()) {
+				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.build(collapseId, myWeight, myWeight);
 				}
@@ -644,12 +719,23 @@ public class Node {
 			collapseId = m.getCollapseId();
 			state = NodeState.Recovering;
 			nodeParent = m.getSrc();
-			for (Link l : outgoingLinks.values()) {
-				incWaitMsg();
-				l.recover(collapseId, myWeight);
-			}
-			if (outgoingLinks.isEmpty()) {
-				sendReturnMessage(false);
+			if (getSRC() == 0) {
+				for (Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.recover(collapseId, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					sendReturnMessage(false);
+				}
+			} else {
+				state = NodeState.Building;
+				for (Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.build(collapseId, myWeight, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					sendReturnMessage(false);
+				}
 			}
 		} else if (isBuilding()) {
 			if (isOriginator()) {
@@ -1056,14 +1142,14 @@ public class Node {
 				rcc--;
 			}
 		}
-			for (Link l : outgoingLinks.values()) {
-				l.plagueDelete(collapseId,myWeight);
-			}
-			outgoingLinks.clear();
-			if (isSimplyDead()) {
-				collapseId = null;
-				state = NodeState.Dead;
-			}
+		for (Link l : outgoingLinks.values()) {
+			l.plagueDelete(collapseId, myWeight);
+		}
+		outgoingLinks.clear();
+		if (isSimplyDead()) {
+			collapseId = null;
+			state = NodeState.Dead;
+		}
 	}
 
 	private void deleteMessage(Message m) {
