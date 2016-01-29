@@ -9,6 +9,7 @@ public enum MessageType {
 	Build ("Build"),
 	Delete ("Delete"), 
 	PlagueDelete ("PlagueDelete"),
+	LinkBuild("LinkBuild"),
 	LinkBuildReturn ("LinkBuildReturn");
 	
 	private final String name;

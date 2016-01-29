@@ -61,7 +61,7 @@ public class BenzeneTest extends junit.framework.TestCase {
 		for (int i = 0; i < NumBenzene; i++) {
 			root.deleteLink(link);
 			if (i == 0) {
-				link = 5;
+				link = 7;
 			} else {
 				link = link + 4;
 			}

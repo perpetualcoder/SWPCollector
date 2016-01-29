@@ -6,9 +6,11 @@ public class CollapseId {
 	static AtomicInteger uid = new AtomicInteger();
 	int cid;
 	int in;
-	public CollapseId() {
+	public int originator;
+	public CollapseId(int nodeId) {
 		cid = uid.incrementAndGet();
 		in = 0;
+		originator = nodeId;
 	}
 	
 	public void newCollapse() {
