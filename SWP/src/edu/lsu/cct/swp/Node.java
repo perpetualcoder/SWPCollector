@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.crypto.Cipher;
+
 import org.apache.log4j.BasicConfigurator;
 
 public class Node {
@@ -106,8 +108,8 @@ public class Node {
 	}
 
 	public boolean isRecovered() {
-//		return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
-//				&& waitMsg == 0 && getSRC() == 0;
+		// return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
+		// && waitMsg == 0 && getSRC() == 0;
 		return state == NodeState.Recovered;
 	}
 
@@ -165,9 +167,18 @@ public class Node {
 			if (isPhantomizing()) {
 				state = NodeState.Phantomized;
 				if (isOriginator()) {
-					if (getSRC() > 0)
+					if (getSRC() > 0) {
 						System.out.println("Build Children");
-					else {
+						state = NodeState.Building;
+						for (Link l : outgoingLinks.values()) {
+							incWaitMsg();
+							l.build(collapseId, myWeight, myWeight);
+						}
+						if (outgoingLinks.isEmpty()) {
+							incWaitMsg();
+							sendReturnMessage(false);
+						}
+					} else {
 						state = NodeState.Recovering;
 						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
@@ -179,7 +190,31 @@ public class Node {
 						}
 					}
 				} else {
-					sendReturnMessage(false);
+					if (rerecover) {
+						rerecover = false;
+						if (getSRC() > 0) {
+							System.out.println("Build Children");
+							state = NodeState.Building;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								l.build(collapseId, myWeight, myWeight);
+							}
+							if (outgoingLinks.isEmpty()) {
+								sendReturnMessage(false);
+							}
+						} else {
+							state = NodeState.Recovering;
+							for (Link l : outgoingLinks.values()) {
+								incWaitMsg();
+								l.recover(collapseId, myWeight);
+							}
+							if (outgoingLinks.isEmpty()) {
+								sendReturnMessage(false);
+							}
+						}
+					} else {
+						sendReturnMessage(false);
+					}
 				}
 			}
 
@@ -187,13 +222,13 @@ public class Node {
 		if (waitMsg == 0 && rcc == pc) {
 			if (isBuilding()) {
 				if (isOriginator()) {
-					if(startover) {
+					if (startover) {
 						rerecover = true;
 						startover = false;
 					}
 					if (rephantomize) {
 						rephantomize = false;
-						for(Link l : outgoingLinks.values()) {
+						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
 							l.phantomize(collapseId, null, myWeight, myWeight);
 						}
@@ -201,12 +236,12 @@ public class Node {
 							incWaitMsg();
 							sendReturnMessage(false);
 						}
-					} else if(rerecover) {
+					} else if (rerecover) {
 						rerecover = false;
 						if (getSRC() > 0) {
 							// CLean Up
 						} else {
-							for(Link l : outgoingLinks.values()){
+							for (Link l : outgoingLinks.values()) {
 								incWaitMsg();
 								l.recover(collapseId, myWeight);
 							}
@@ -223,24 +258,24 @@ public class Node {
 						phantomized = false;
 					}
 				} else {
-					if(rephantomize) {
+					if (rephantomize) {
 						rephantomize = false;
-						for(Link l : outgoingLinks.values()) {
+						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
 							l.phantomize(collapseId, null, myWeight, myWeight);
 						}
 						if (outgoingLinks.isEmpty()) {
 							sendReturnMessage(false);
 						}
-					} else if(startover) {
+					} else if (startover) {
 						startover = false;
 						collapseId = null;
 						sendReturnMessage(true);
 						nodeParent = -1;
 						state = NodeState.Healthy;
-					} else if(rerecover) {
+					} else if (rerecover) {
 						rerecover = false;
-						for(Link l : outgoingLinks.values()){
+						for (Link l : outgoingLinks.values()) {
 							incWaitMsg();
 							l.recover(collapseId, myWeight);
 						}
@@ -632,11 +667,11 @@ public class Node {
 					sendReturnMessage(false);
 				}
 			}
-		} else if(isRecovered()) {
+		} else if (isRecovered()) {
 			if (m.getCollapseId().equalTo(collapseId)) {
 				linkBuild(m.getNew(), m.getNew());
 				state = NodeState.Building;
-				for(Link l : outgoingLinks.values()) {
+				for (Link l : outgoingLinks.values()) {
 					incWaitMsg();
 					l.build(collapseId, myWeight, myWeight);
 				}
@@ -918,7 +953,7 @@ public class Node {
 
 	private void phantomizeMessage(Message m) {
 		decRCIncPC(m);
-		if (isPhantomizing() || isHealthy()) {
+		if (isPhantomizing() || isHealthy() || isPhantomized()) {
 			if (isOriginator()) {
 				if (m.getCollapseId().lessThan(collapseId)
 						|| m.getCollapseId().equalTo(collapseId)) {
@@ -942,15 +977,15 @@ public class Node {
 						l.phantomize(m.getCollapseId(), null, old, myWeight);
 						incWaitMsg();
 					}
+					phantomized = true;
 					if (outgoingLinks.isEmpty()) {
 						state = NodeState.Phantomized;
 						sendReturnMessage(false);
-					} else {
-						phantomized = true;
 					}
 				} else {
 					nodeParent = m.getSrc();
-					sendReturnMessage(false);
+					sendReturnMessageSender(false, m.getSrc(),
+							m.getCollapseId());
 				}
 			}
 		} else if (isBuilding()) {
@@ -1185,19 +1220,24 @@ public class Node {
 			startPhantomizing();
 			state = NodeState.Phantomizing;
 		} else {
-			if (isPhantomizing() || isRecovering() || isBuilding()) {
+			if (waitMsg > 0) {
 				sendReturnMessage(true);
-				waitMsg = 0;
+				rerecover = true;
+				rephantomize = true;
+				collapseId = new CollapseId(nodeId);
+				nodeParent = nodeId;
+			} else {
+				nodeParent = nodeId;
+				collapseId = new CollapseId(nodeId);
+				for (Link l : outgoingLinks.values()) {
+					incWaitMsg();
+					l.recover(collapseId, myWeight);
+				}
+				if (outgoingLinks.isEmpty()) {
+					incWaitMsg();
+					sendReturnMessage(false);
+				}
 			}
-			rcc = 0;
-			rephantomize = true;
-			rerecover = true;
-			collapseId = new CollapseId(nodeId);
-			// long oldWeight = myWeight;
-			// myWeight = maxWeight + 1;
-			// rc[which] = rc[1-which];
-			// rc[1-which] = 0;
-			// spawnNewCollapseHere(oldWeight);
 		}
 	}
 
