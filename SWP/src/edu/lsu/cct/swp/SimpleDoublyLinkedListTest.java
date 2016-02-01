@@ -11,6 +11,7 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 		Message.master = master;
 		Node root = master.createNode();
 		Node prev = root;
+		master.no = node;
 		// Creating five nodes and then creating a
 		// cycle.
 		for (int i = 0; i < 5; i++) {
@@ -35,9 +36,10 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 			}
 			assertTrue("The nodes are healthy",
 					node[i].getState() == NodeState.Healthy);
+			node[i].printNode();
 		}
 		// Severe the root link.
-//		root.deleteLink(node[0].getNodeId());
+		root.deleteLink(node[0].getNodeId());
 		master.mark(root);
 		// Process all the messages in the system.
 		master.processAllMessages();
@@ -50,6 +52,8 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 					&& node[i].mark == true));
 			node[i].printNode();
 		}
+		System.out.println("-----------------------------------------------------------------------------------");
+
 
 	}
 
@@ -57,6 +61,7 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 		Message.master = master;
 		Node root = master.createNode();
 		Node prev = root;
+		master.no = node;
 		// Creating five nodes and then creating a
 		// cycle.
 		for (int i = 0; i < 5; i++) {
@@ -71,9 +76,11 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 			node[i - 1].processQueue();
 			node[i].processQueue();
 		}
-		root.createLink(node[4].getNodeId());
+		Node roots = master.createNode();
+		roots.myWeight = node[4].myWeight + 1;
+		roots.createLink(node[4].getNodeId());
 		node[4].processQueue();
-		root.processQueue();
+		roots.processQueue();
 		// Verifying if the nodes are all healthy and
 		// count as expected.
 		for (int i = 0; i < 5; i++) {
@@ -85,21 +92,21 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 			node[i].printNode();
 		}
 		// Severe the root link.
-//		root.deleteLink(node[0].getNodeId());
+		root.deleteLink(node[0].getNodeId());
 		// Process all the messages in the system.
-		master.mark(root);
+		master.mark(roots);
 		master.processAllMessages();
 		// Verify if all the nodes are dead by now.
 		for (int i = 0; i < 5; i++) {
 			node[i].printNode();
-			System.out.println("Node state "+node[i].getState());
 			assertTrue("Something went wrong", 
 					(node[i].getState() == NodeState.Dead 
 					&& node[i].mark == false) ||
 					(node[i].getState() == NodeState.Healthy
 					&& node[i].mark == true));
-			node[i].printNode();
 		}
+		System.out.println("-----------------------------------------------------------------------------------");
+
 
 	}
 }

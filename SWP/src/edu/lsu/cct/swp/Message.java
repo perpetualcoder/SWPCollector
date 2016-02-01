@@ -12,6 +12,16 @@ public class Message {
 	public boolean isAlready() {
 		return already;
 	}
+	private boolean decrcc;
+	
+	public void setDecRcc() {
+		decrcc = true;
+	}
+	
+	public boolean getDecrcc(){
+		return decrcc;
+	}
+	
 
 	public void setAlready(boolean already) {
 		this.already = already;

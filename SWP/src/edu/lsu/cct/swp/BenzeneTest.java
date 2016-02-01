@@ -2,8 +2,8 @@ package edu.lsu.cct.swp;
 
 public class BenzeneTest extends junit.framework.TestCase {
 
-	public static int count = 4;
-	public static int NumBenzene = 2;
+	public static int count = 6;
+	public static int NumBenzene = 3;
 	public static int totalNodes = count + (NumBenzene - 1) * (count - 2);
 	private Node node[] = new Node[totalNodes];
 	private Node root;
@@ -59,26 +59,26 @@ public class BenzeneTest extends junit.framework.TestCase {
 		// Severe the root link.
 		int link = 1;
 		for (int i = 0; i < NumBenzene; i++) {
-//			root.deleteLink(link);
+			 root.deleteLink(link);
 			if (i == 0) {
-				link = 7;
+				link = count + 1;
 			} else {
-				link = link + 4;
+				link = link + (count - 2);
 			}
 		}
-		 master.mark(root);
+		master.mark(root);
 		// // Process all the messages in the system.
-		 master.processAllMessages();
-		 // Verify if all the nodes are dead by now.
-		 for (int i = 0; i < totalNodes; i++) {
-		 node[i].printNode();
-		 assertTrue("Something went wrong",
-		 (node[i].getState() == NodeState.Dead
-		 && node[i].mark == false) ||
-		 (node[i].getState() == NodeState.Healthy
-		 && node[i].mark == true));
-		 }
-		 System.out.println("Hello!!!");
+		master.processAllMessages();
+		// Verify if all the nodes are dead by now.
+		for (int i = 0; i < totalNodes; i++) {
+			node[i].printNode();
+			assertTrue("Something went wrong",
+					(node[i].getState() == NodeState.Dead
+							&& node[i].mark == false)
+							|| (node[i].getState() == NodeState.Healthy
+									&& node[i].mark == true));
+		}
+		System.out.println("Hello!!!");
 
 	}
 

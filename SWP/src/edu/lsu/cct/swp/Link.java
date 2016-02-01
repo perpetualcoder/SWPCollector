@@ -80,10 +80,12 @@ public class Link {
 		msg.printMsg("receiving");
 	}
 
-	public void build(CollapseId collapseId, long old, long noob) {
+	public void build(CollapseId collapseId, long old, long noob, boolean dec) {
 		Message msg = new Message(MessageType.Build, src, dest, old, noob);
 		msg.setCollapseId(collapseId);
 		msg.setWhich();
+		if (dec)
+			msg.setDecRcc();
 		msg.send();
 		msg.printMsg("receiving");
 	}

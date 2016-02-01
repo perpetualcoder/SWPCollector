@@ -3,6 +3,7 @@ package edu.lsu.cct.swp;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.List;
 import java.util.Queue;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class Master {
 	}
 	
 	public void processAllMessages() {
+		Scanner sc = new Scanner(System.in);
 		while (true) {
 			List<Node> nodes = new ArrayList<>();
 			String r=" ";
@@ -70,13 +72,16 @@ public class Master {
 				break;
 			}
 			while (nodes.size() > 0) {
+//				System.out.println("continue?");
+//				sc.next();
 				int n = RAND.nextInt(nodes.size());
 				Node node = nodes.get(n);
 				node.processQueue();
 				if (node.getQu().size() == 0)
 					nodes.remove(node);
+				printAllNodes();
 			}
-			printAllNodes();
+//			printAllNodes();
 			System.out.println("---Mailbox---");
 		}
 	}
