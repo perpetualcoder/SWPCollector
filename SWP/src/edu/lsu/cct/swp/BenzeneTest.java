@@ -3,7 +3,7 @@ package edu.lsu.cct.swp;
 public class BenzeneTest extends junit.framework.TestCase {
 
 	public static int count = 6;
-	public static int NumBenzene = 3;
+	public static int NumBenzene = 30;
 	public static int totalNodes = count + (NumBenzene - 1) * (count - 2);
 	private Node node[] = new Node[totalNodes];
 	private Node root;

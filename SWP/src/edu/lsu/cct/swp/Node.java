@@ -575,7 +575,7 @@ public class Node {
 
 	private void returnMessage(Message m) {
 		decWaitMsg();
-		startover = m.isStartOver();
+//		startover = m.isStartOver();
 	}
 
 	private void sendReturnMessage(boolean startover) {
