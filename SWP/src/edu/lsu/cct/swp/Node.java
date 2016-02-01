@@ -229,10 +229,13 @@ public class Node {
 		if (waitMsg == 0 && isRecovering()) {
 			if (rcc == pc) {
 				if(isOriginator()) {
+					System.out.println("Hello!"+startover);
+					printNode();
 					if(startover) {
 						rerecover = true;
 						startover = false;
 					} else if(rerecover || getSRC() > 0) {
+						System.out.println("This is not exectured");
 						rerecover = false;
 						rcc = 0;
 						recoverOrBuild();
@@ -833,7 +836,7 @@ public class Node {
 				+ " ," + pc + ", " + rcc + ", " + state + " ph: " + phantomized
 				+ " collapseID" + co + " wait " + waitMsg + "mark " + mark
 				+ " parent = " + nodeParent + "weight " + myWeight + " max weight"
-				+ maxWeight);
+				+ maxWeight+" start over "+startover);
 	}
 
 	public static void main(String args[]) {
