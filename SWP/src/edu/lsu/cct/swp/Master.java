@@ -10,6 +10,13 @@ import java.util.ArrayList;
 
 public class Master {
 	public final Random RAND = new Random();
+
+  static {
+    try {
+      assert false;
+      throw new Error("Assertions not enabled");
+    } catch(AssertionError ae) {}
+  }
 	
 	public Node[] no;
 
@@ -28,7 +35,7 @@ public class Master {
 			if (no[i] == null)
 				continue;
 			assert( no[i].getSRC() > 0);
-			assert(	no[i].getState() == NodeState.Healthy);
+			assert(	no[i].getState() == NodeState.Healthy) : "State="+no[i].getState();
 			no[i].printNode();
 		}
 	}
@@ -67,22 +74,22 @@ public class Master {
 					nodes.add(n);
 				}
 			}
-			System.out.println("Mailbox has messages for "+r);
+			Here.here("Mailbox has messages for "+r);
 			if (nodes.size() == 0) {
 				break;
 			}
 			while (nodes.size() > 0) {
-//				System.out.println("continue?");
+//				Here.here("continue?");
 //				sc.next();
 				int n = RAND.nextInt(nodes.size());
 				Node node = nodes.get(n);
 				node.processQueue();
 				if (node.getQu().size() == 0)
 					nodes.remove(node);
-				printAllNodes();
+				//printAllNodes();
 			}
 //			printAllNodes();
-			System.out.println("---Mailbox---");
+			Here.here("---Mailbox---");
 		}
 	}
 

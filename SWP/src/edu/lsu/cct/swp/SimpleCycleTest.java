@@ -32,7 +32,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 					node[i].getState() == NodeState.Healthy);
 			node[i].printNode();
 		}
-		System.out.println("Ehllo!");
+		Here.here("Ehllo!");
 		// Severe the root link.
 		root.deleteLink(node[0].getNodeId());
 		master.mark(root);
@@ -50,7 +50,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 					(node[i].getState() == NodeState.Healthy
 					&& node[i].mark == true));
 		}
-		System.out.println("-----------------------------------------------------------------------------------");
+		Here.here("-----------------------------------------------------------------------------------");
 
 	}
 
@@ -102,7 +102,7 @@ public class SimpleCycleTest extends junit.framework.TestCase {
 					&& node[i].mark == true));
 			node[i].printNode();
 		}
-		System.out.println("-----------------------------------------------------------------------------------");
+		Here.here("-----------------------------------------------------------------------------------");
 
 
 	}

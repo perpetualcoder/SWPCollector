@@ -55,7 +55,7 @@ public class BenzeneTest extends junit.framework.TestCase {
 					node[i].getState() == NodeState.Healthy);
 			node[i].printNode();
 		}
-		System.out.println("Ehllo!");
+		Here.here("Ehllo!");
 		// Severe the root link.
 		int link = 1;
 		for (int i = 0; i < NumBenzene; i++) {
@@ -78,7 +78,7 @@ public class BenzeneTest extends junit.framework.TestCase {
 							|| (node[i].getState() == NodeState.Healthy
 									&& node[i].mark == true));
 		}
-		System.out.println("Hello!!!");
+		Here.here("Hello!!!");
 
 	}
 

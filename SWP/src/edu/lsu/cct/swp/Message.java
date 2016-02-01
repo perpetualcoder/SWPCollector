@@ -55,7 +55,7 @@ public class Message {
 	public void printMsg() {
 		String coll = collapseId!=null ?collapseId.toString():"null";
 		String ov = Override!=null?Override.toString():"null";
-		System.out.println(" Node "+dest+" is processing msg "+ type.toString()+
+		Here.here(" Node "+dest+" is processing msg "+ type.toString()+
 				" from "+src+ "which = "+which+" phantom = "+phantom+
 				" collapseId" + coll +
 				" override"+ov);
@@ -63,7 +63,7 @@ public class Message {
 	public void printMsg(String send) {
 		String coll = collapseId!=null ?collapseId.toString():"null";
 		String ov = Override!=null?Override.toString():"null";
-		System.out.println(" Node "+dest+" is "+send+"  msg "+ type.toString()+
+		Here.here(" Node "+dest+" is "+send+"  msg "+ type.toString()+
 				" from "+src+ "which = "+which+" phantom = "+phantom+
 				" collapseId" + coll +
 				" override"+ov);

@@ -229,13 +229,13 @@ public class Node {
 		if (waitMsg == 0 && isRecovering()) {
 			if (rcc == pc) {
 				if(isOriginator()) {
-					System.out.println("Hello!"+startover);
+					Here.here("Hello!"+startover);
 					printNode();
 					if(startover) {
 						rerecover = true;
 						startover = false;
 					} else if(rerecover || getSRC() > 0) {
-						System.out.println("This is not exectured");
+						Here.here("This is not exectured");
 						rerecover = false;
 						rcc = 0;
 						recoverOrBuild();
@@ -676,7 +676,7 @@ public class Node {
 	}
 
 	private void plagueDeleteMessage(Message m) {
-		System.out.println("Received this");
+		Here.here("Received this");
 		if (m.getPhantom()) {
 			pc--;
 			if (m.getCollapseId().equalTo(collapseId) && rcc > 0) {
@@ -812,7 +812,7 @@ public class Node {
 					rc[which]++;
 				}
 			} else {
-				System.out.println(
+				Here.here(
 						"Node is creating phantom from node that is already phantomized");
 				assert false;
 			}
@@ -832,7 +832,7 @@ public class Node {
 
 	public void printNode() {
 		String co = collapseId != null ? collapseId.toString() : "null";
-		System.out.println("Node " + nodeId + " : " + getSRC() + "," + getWRC()
+		Here.here("Node " + nodeId + " : " + getSRC() + "," + getWRC()
 				+ " ," + pc + ", " + rcc + ", " + state + " ph: " + phantomized
 				+ " collapseID" + co + " wait " + waitMsg + "mark " + mark
 				+ " parent = " + nodeParent + "weight " + myWeight + " max weight"

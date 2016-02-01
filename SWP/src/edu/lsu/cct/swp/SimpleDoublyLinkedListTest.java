@@ -52,7 +52,7 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 					&& node[i].mark == true));
 			node[i].printNode();
 		}
-		System.out.println("-----------------------------------------------------------------------------------");
+		Here.here("-----------------------------------------------------------------------------------");
 
 
 	}
@@ -105,7 +105,7 @@ public class SimpleDoublyLinkedListTest extends junit.framework.TestCase {
 					(node[i].getState() == NodeState.Healthy
 					&& node[i].mark == true));
 		}
-		System.out.println("-----------------------------------------------------------------------------------");
+		Here.here("-----------------------------------------------------------------------------------");
 
 
 	}

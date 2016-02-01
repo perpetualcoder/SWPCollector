@@ -56,7 +56,7 @@ public class CreationTest extends junit.framework.TestCase {
 			assertEquals("Number of Outgoing Links is not right", 4 - i,
 					node[i].numOutgoingLinks());
 		}
-		System.out.println("Strong links are created");
+		Here.here("Strong links are created");
 		createWeakLinks();
 		for (int i = 0; i < 5; i++) {
 			assertEquals("Weak RC is not as same as expected", i==0?0:3,
@@ -64,7 +64,7 @@ public class CreationTest extends junit.framework.TestCase {
 //			assert(node[i].getWRC()>0);
 			node[i].printNode();
 		}
-		System.out.println("Weak links are created too!");
+		Here.here("Weak links are created too!");
 	}
 	
 	
