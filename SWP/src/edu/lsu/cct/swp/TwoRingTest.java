@@ -89,6 +89,8 @@ public class TwoRingTest extends junit.framework.TestCase {
 		Message.master = master;
 		Node root = master.createNode();
 		Node prev = root;
+		master.no = node;
+
 		// Creating five nodes and then creating a
 		// cycle.
 		for (int i = 0; i < 6; i++) {
