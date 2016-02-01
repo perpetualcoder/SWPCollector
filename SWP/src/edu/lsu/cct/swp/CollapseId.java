@@ -25,6 +25,10 @@ public class CollapseId {
 		return c != null && cid < c.cid;
 	}
 	
+	public boolean lessThanOrEqualTo(CollapseId c) {
+		return lessThan(c) || equalTo(c);
+	}
+	
 	public boolean partialLessThan(CollapseId c) {
 		return c !=  null && cid == c.cid && in < c.in;
 	}
