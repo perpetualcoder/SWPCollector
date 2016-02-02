@@ -34,8 +34,8 @@ public class Master {
 		for (int i = 0; i < no.length; i++) {
 			if (no[i] == null)
 				continue;
-			assert( no[i].getSRC() > 0);
-			assert(	no[i].getState() == NodeState.Healthy) : "State="+no[i].getState();
+//			assert( no[i].getSRC() > 0);
+//			assert(	no[i].getState() == NodeState.Healthy) : "State="+no[i].getState();
 			no[i].printNode();
 		}
 	}
@@ -86,7 +86,7 @@ public class Master {
 				node.processQueue();
 				if (node.getQu().size() == 0)
 					nodes.remove(node);
-				//printAllNodes();
+				printAllNodes();
 			}
 //			printAllNodes();
 			Here.here("---Mailbox---");

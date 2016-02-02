@@ -207,7 +207,7 @@ public class Node {
 		if (waitMsg == 0 && isBuilding()) {
 			if (getSRC()>0 || startover ) {
 				if (!isOriginator()) {
-					sendReturnMessage(true);
+					sendReturnMessage(startover);
 				}
 				cleanUp();
 			} else {
@@ -574,6 +574,7 @@ public class Node {
 	}
 
 	private void returnMessage(Message m) {
+		startover = startover | m.isStartOver();
 		decWaitMsg();
 //		startover = m.isStartOver();
 	}
