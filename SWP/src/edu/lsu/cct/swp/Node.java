@@ -55,22 +55,12 @@ public class Node {
 	}
 
 	public boolean isHealthy() {
-		// return rc[which] > 0 && pc == 0 && rcc == 0 && phantomized == false
-		// && collapseId == null && waitMsg == 0;
 		return state == NodeState.Healthy;
 	}
 
 	public boolean isOriginator() {
 		return nodeParent == nodeId && collapseId != null
 				&& collapseId.originator == nodeId;
-	}
-
-	public boolean isLinkBuilt() {
-		for (Link l : outgoingLinks.values()) {
-			if (l.getPhantom())
-				return false;
-		}
-		return true;
 	}
 
 	public boolean isWeaklySupported() {
@@ -83,44 +73,20 @@ public class Node {
 				&& phantomized == false && collapseId == null && waitMsg == 0;
 	}
 
-	public boolean isPhantomWeaklySupported() {
-		return getWRC() > 0 && getSRC() == 0 && pc > 0 && rcc == 0
-				&& phantomized == false && collapseId != null && waitMsg == 0;
-	}
-
 	public boolean isPhantomizing() {
-		// return pc > 0 && rcc == 0 && phantomized == true && collapseId !=
-		// null
-		// && waitMsg > 0;
 		return state == NodeState.Phantomizing;
 	}
 
 	public boolean isPhantomized() {
-		// return (pc > 0) && (rcc == 0) && (phantomized == true)
-		// && (collapseId != null) && (waitMsg == 0);
 		return state == NodeState.Phantomized;
 	}
 
-	public boolean isPhantomizedNow() {
-		return getSRC() == 0 && getWRC() == 0 && (pc > 0) && (rcc == 0)
-				&& (phantomized == false) && (collapseId != null)
-				&& (waitMsg == 0);
-	}
-
 	public boolean isRecovering() {
-		// return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
-		// && waitMsg > 0;
 		return state == NodeState.Recovering;
 	}
 
 	public boolean isRecovered() {
-		// return pc > 0 && rcc > 0 && phantomized == true && collapseId != null
-		// && waitMsg == 0 && getSRC() == 0;
 		return state == NodeState.Recovered;
-	}
-
-	public boolean isOrginatorBuilt() {
-		return isOriginator() && rcc > 0 && rc[which] > 0 && collapseId != null;
 	}
 
 	public boolean isMayBeDelete() {
@@ -138,21 +104,8 @@ public class Node {
 		return (isSimplyDead() || (isMayBeDelete() && isOriginator()));
 	}
 
-	public boolean isPhantomLive() {
-		return rc[which] > 0 && collapseId != null && waitMsg == 0;
-	}
-
 	public boolean isBuilding() {
-		// return rc[which] > 0 && collapseId != null && waitMsg > 0;
 		return state == NodeState.Building;
-	}
-
-	public void setNodeParent(int id) {
-		nodeParent = id;
-	}
-
-	public int getPhantomCount() {
-		return pc;
 	}
 
 	public int getParentNodeId() {
@@ -693,6 +646,34 @@ public class Node {
 			state = NodeState.Dead;
 		}
 	}
+	
+	/***
+	 * Decrement SC/WC/PC/RCC
+	 * If (Garbage State)
+	 * 		If(Phantomized)
+	 * 			Send PD to Gamma
+	 * 		else
+	 * 			send D to Gamma
+	 * 			Delete the node.
+	 * else if (Weakly supported)
+	 * 		Toggle Counts
+	 * 		CID = new CID
+	 * 		<PH, Node Id, Gamma, CID>
+	 * 		state = Phantomizing
+	 * else if (pc $>$ 0 & SC = 0)
+	 * 		Toggle Counts.
+	 * 		if (not initiator)
+	 * 				<R, Node Id, parent, CID, true>
+	 * 		if (W > 0)
+	 * 			RR = true & RP = true 
+	 * 			CID = new CID;
+	 * 		else
+	 * 			CID = new CID;
+	 * 			RCC = 0.
+	 * 	 		<RC,Node Id, Gamma, CID>
+	 * 		 
+	 * @param m
+	 */
 
 	private void deleteMessage(Message m) {
 		decrementCountInDelMsg(m);
@@ -705,7 +686,7 @@ public class Node {
 			return;
 		} else if (isGarbage() || getSRC() > 0) {
 			return;
-		} else if (isWeaklySupported() || isPhantomWeaklySupported()) {
+		} else if (isWeaklySupported() || isPhantomlySupported()) {
 			startPhantomizing();
 			state = NodeState.Phantomizing;
 		} else {
