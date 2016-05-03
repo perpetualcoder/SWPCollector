@@ -559,6 +559,47 @@ public class Node {
 		msg.send();
 		msg.printMsg("receiving");
 	}
+	
+	
+	/***
+	 * Decrement SC/WC and Increment PC.
+	 * if (phantomizing)
+	 * 		if (initiator)
+	 * 			if (msg.CID <= CID)
+	 * 				<R, Node Id, msg.sender, CID>
+	 * 			else
+	 * 				parent = msg.sender
+	 * 				CID = null
+	 * 		else
+	 * 			<R, Node Id, msg.sender, CID>
+	 * else if (healthy or phantomized)
+	 * 		parent = msg.sender
+	 * 		<R, Node Id, msg.sender, CID>
+	 * else if (Weakly Supported  or SC = 0)
+	 * 		Toggle SC and WC
+	 * 		parent = msg.sender
+	 * 		state = phantomizing & Phantomized = true
+	 * 		<PH, Node Id, Gamma out, CID>
+	 * 		if (Gamma out is empty)
+	 * 			state = phantomized
+	 * 			<R, Node Id, parent, CID>
+	 * else if (building)
+	 * 		if ( SC > 0)
+	 * 			<R, Node Id, msg.sender, CID>
+	 * 		else 
+	 * 			if (not initiator)
+	 * 				<R, Node Id, parent, CID, True>
+	 * 				Rephantomize = true
+	 * 				parent = msg.sender
+	 * 			else 
+	 * 				Rephantomize = true
+	 * 				if (msg.CID > CID)
+	 * 					CID = null & parent = msg.sender
+	 * 				else
+	 * 					<R, Node ID, msg sender, CID>
+	 * 					Rerecover = true
+	 * @param m
+	 */
 
 	private void phantomizeMessage(Message m) {
 		decRCIncPC(m);
